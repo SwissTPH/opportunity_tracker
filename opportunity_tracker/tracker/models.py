@@ -131,7 +131,8 @@ class Currency(models.Model):
 
 
 class Opportunity(models.Model):
-    OPP_TYPE = [("EOI", "EOI"), ("RFP", "RFP"), ("FC", "Fore-cast")]
+    OPP_TYPE = [("EOI", "EOI"), ("RFP", "RFP"),
+                ("FC", "Fore-cast"), ("NA", "Not Applicable")]
     OPP_STATUS = [
         (1, "Entered"),
         (2, "Go"),
