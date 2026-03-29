@@ -203,18 +203,28 @@ class UpdateStatusForm(forms.ModelForm):
                                   widget=forms.DateInput(
                                       attrs={'class': 'form-control', 'type': 'date', 'max': datetime.date.today().isoformat(), 'placeholder': 'dd/mm/yyyy'})
                                   )
+    project_start_date = forms.DateField(required=False,
+                                         widget=forms.DateInput(
+                                             attrs={
+                                                 'class': 'form-control', 'type': 'date', 'placeholder': 'dd/mm/yyyy'}
+                                         ))
+    project_end_date = forms.DateField(required=False,
+                                       widget=forms.DateInput(
+                                           attrs={
+                                               'class': 'form-control', 'type': 'date', 'placeholder': 'dd/mm/yyyy'}
+                                       ))
+
+    status = forms.ChoiceField(
+        widget=forms.RadioSelect, label="status", choices=OPP_STATUS, required=True, error_messages={'required': 'Select at least one option'})
 
     class Meta:
         model = Opportunity
         fields = ['status', 'lead_unit', 'proposal_lead',
-                  'result_note', 'result_date']
+                  'result_note', 'result_date', 'project_start_date', 'project_end_date']
 
         widgets = {
             'result_note': forms.TextInput(attrs={'placeholder': 'Enter notes'})
         }
-
-    status = forms.ChoiceField(
-        widget=forms.RadioSelect, label="status", choices=OPP_STATUS, required=True, error_messages={'required': 'Select at least one option'})
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -197,6 +197,8 @@ class Opportunity(models.Model):
     result_date = models.DateField(blank=True, null=True)
     is_noncompetitive = models.BooleanField(
         blank=True, null=True, default=False)
+    project_start_date = models.DateField(blank=True, null=True)
+    project_end_date = models.DateField(blank=True, null=True)
 
     class Meta:
         db_table = "opportunity"

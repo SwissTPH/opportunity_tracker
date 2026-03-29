@@ -77,6 +77,31 @@
           </div>
           {%endif%}
         </div>
+
+        <div class="mb-3" id="project_start_date_container">
+          <div class="form-floating">
+            {{update_status_form.project_start_date|add_class:"form-control"}}
+            <label for="project_start_date" class="form-label">Project Start Date</label>
+          </div>
+          {%if update_status_form.project_start_date.errors%}
+          <div class="text-danger">
+            {{update_status_form.project_start_date.errors|striptags}}
+          </div>
+          {%endif%}
+        </div>
+
+        <div class="mb-3" id="project_end_date_container">
+          <div class="form-floating">
+            {{update_status_form.project_end_date|add_class:"form-control"}}
+            <label for="project_end_date" class="form-label">Project End Date</label>
+          </div>
+          {%if update_status_form.project_end_date.errors%}
+          <div class="text-danger">
+            {{update_status_form.project_end_date.errors|striptags}}
+          </div>
+          {%endif%}
+        </div>
+
         {% with
         selected_status=update_status_form.data.status|default:form.status.value
         %} {% if selected_status|add:0 >= 5 and selected_status|add:0 <= 7 %}
@@ -138,6 +163,15 @@
         } else {
           $("#result_date_container").hide();
 
+        }
+
+        // Show the project start and end date fields only for the status Won
+        if (selectedStatus === "7") {
+          $("#project_start_date_container").show();
+          $("#project_end_date_container").show();
+        } else {
+          $("#project_start_date_container").hide();
+          $("#project_end_date_container").hide();
         }
 
         // Update form action based on selected status
