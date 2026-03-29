@@ -15,6 +15,7 @@ class WorkflowDefinition(TypedDict):
     statuses: Dict[str, StatusSepc]
     transitions: Dict[str, List[str]]
     required_fields: Dict[str, List[str]]
+    transition_conditions: NotRequired[Dict[str, Dict[str, Any]]]
 
 # Validations
 
@@ -30,6 +31,13 @@ def validate_workflow(workflow: Mapping[str, Any]) -> None:
     statuses = workflow["statuses"]
     transitions = workflow["transitions"]
     required_fields = workflow["required_fields"]
+    transition_conditions = workflow.get("transition_conditions", {})
+
+    _validate_statuses(statuses)
+    _validate_transitions(statuses, transitions)
+    _validate_required_fields(statuses, required_fields)
+    _validate_transition_conditions(
+        statuses, transitions, transition_conditions)
 
 
 def _validate_top_level_keys(workflow: Mapping[str, Any]) -> None:
@@ -38,6 +46,12 @@ def _validate_top_level_keys(workflow: Mapping[str, Any]) -> None:
     missing = required - set(workflow.keys())
     if missing:
         raise ValueError(f"Workflow missing required keys: {sorted(missing)}")
+
+    optional = {"transition_conditions"}
+    unknown = set(workflow.keys()) - required - optional
+    if unknown:
+        raise ValueError(
+            f"Workflow has unknown top-level keys: {sorted(unknown)}")
 
 
 def _validate_top_level_types(workflow: Mapping[str, Any]) -> None:
@@ -55,6 +69,9 @@ def _validate_top_level_types(workflow: Mapping[str, Any]) -> None:
 
     if not isinstance(workflow["required_fields"], dict):
         raise ValueError("required_fields must be a dict")
+
+    if "transition_conditions" in workflow and not isinstance(workflow["transition_conditions"], dict):
+        raise ValueError("transition_conditions must be a dict if provided")
 
 
 def _validate_statuses(statuses: Mapping[str, Any]) -> None:
@@ -156,6 +173,53 @@ def _validate_required_fields(
                 )
             seen_fields.add(field_name)
 
+
+def _validate_transition_conditions(
+    statuses: Mapping[str, Any],
+    transitions: Mapping[str, Any],
+    transition_conditions: Mapping[str, Any],
+) -> None:
+    status_slugs = set(statuses.keys())
+
+    for edge_key, rule in transition_conditions.items():
+        if not isinstance(edge_key, str) or "->" not in edge_key:
+            raise ValueError(
+                f"transition_conditions key '{edge_key}' must be in format 'from_slug->to_slug'"
+            )
+
+        from_slug, to_slug = edge_key.split("->", 1)
+        if from_slug not in status_slugs:
+            raise ValueError(
+                f"transition_conditions source '{from_slug}' is undefined")
+        if to_slug not in status_slugs:
+            raise ValueError(
+                f"transition_conditions target '{to_slug}' is undefined")
+
+        allowed_targets = transitions.get(from_slug, [])
+        if to_slug not in allowed_targets:
+            raise ValueError(
+                f"transition_conditions edge '{edge_key}' is not present in transitions"
+            )
+
+        if not isinstance(rule, dict):
+            raise ValueError(
+                f"transition_conditions['{edge_key}'] must be a dict")
+
+        rule_type = rule.get("type")
+        if rule_type != "field_equals":
+            raise ValueError(
+                f"transition_conditions['{edge_key}'] type must be 'field_equals'"
+            )
+
+        if "field" not in rule or "value" not in rule:
+            raise ValueError(
+                f"transition_conditions['{edge_key}'] must define 'field' and 'value'"
+            )
+
+        if not isinstance(rule["field"], str) or not rule["field"].strip():
+            raise ValueError(
+                f"transition_conditions['{edge_key}'].field must be a non-empty string"
+            )
 # Helper function for the rest of the app
 
 
