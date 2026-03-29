@@ -197,3 +197,6 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
 UNFOLD = {
     "SITE_HEADER": "Administrator Panel",
 }
+
+# Workflow
+WORKFLOW_DEFINITION = "tracker.workflows.definitions.default"
