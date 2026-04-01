@@ -29,17 +29,22 @@ WORKFLOW = {
         "entered": ["go", "no_go", "consider"],
 
         # Decision stage
-        "consider": ["go", "no_go"],
+        "consider": ["go", "no_go", "consider"],
+        "no_go": ["go", "no_go", "consider"],
         "go": ["submitted"],
 
         # Submitted stage
         "submitted": ["won", "lost", "cancelled", "assumed_lost", "na"],
 
-        # Won stage and post-win
-        "won": ["transfer_to_rfp"],
+        # Outcome stage options
+        "won": ["submitted", "won", "lost", "cancelled", "assumed_lost", "na", "transfer_to_rfp"],
+        "lost": ["submitted", "won", "lost", "cancelled", "assumed_lost", "na"],
+        "cancelled": ["submitted", "won", "lost", "cancelled", "assumed_lost", "na"],
+        "assumed_lost": ["submitted", "won", "lost", "cancelled", "assumed_lost", "na"],
+        "na": ["submitted", "won", "lost", "cancelled", "assumed_lost", "na"],
+        "transfer_to_rfp": ["submitted", "won", "lost", "cancelled", "assumed_lost", "na", "transfer_to_rfp"],
 
-        # Terminal states intentionally have no outgoing transitions:
-        # no_go, lost, cancelled, assumed_lost, na, transfer_to_rfp
+        # Terminal-like states still expose options by business choice.
     },
     "transition_conditions": {
         "won->transfer_to_rfp": {
@@ -48,7 +53,6 @@ WORKFLOW = {
             "value": "EOI",
         }
     },
-
     "required_fields": {
         # Fields required to move into a target status
         "go": ["proposal_lead", "lead_unit"],

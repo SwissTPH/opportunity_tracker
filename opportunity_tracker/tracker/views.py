@@ -27,6 +27,7 @@ from .forms import (OpportunityDetailForm, OpportunityDetailAnonymousForm, Oppor
 from .models import Opportunity, OpportunityFile
 
 from .serializers import OpportunitySerializer
+from .workflows.service import get_allowed_next_statuses, get_current_status_slug, get_current_status_group
 
 
 User = get_user_model()
@@ -260,6 +261,10 @@ class OpportunityUpdateView(UpdateView):
             context['form'] = kwargs['form']  # Preserve form with errors
 
         context['update_status_form'] = UpdateStatusForm(instance=self.object)
+        context['current_status_slug'] = get_current_status_slug(self.object)
+        context['current_status_group'] = get_current_status_group(self.object)
+        context['allowed_next_statuses'] = get_allowed_next_statuses(
+            self.object)
         if not self.submit_proposal_form:
             context['submit_proposal_form'] = SubmitProposalForm(
                 instance=self.object)
@@ -389,20 +394,19 @@ class OpportunityStatusUpdateView(UpdateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
+        # Use a fresh DB copy so bound form POST data does not mutate the
+        # in-memory instance and accidentally change the available options.
+        current_opportunity = Opportunity.objects.get(pk=self.object.pk)
+        context['current_status_id'] = current_opportunity.status
+
         if 'update_status_form' in kwargs:
             context['update_status_form'] = kwargs["update_status_form"]
         else:
             context['update_status_form'] = UpdateStatusForm(
-                instance=self.object)
+                instance=current_opportunity)
 
-        if self.object.status in [1, 2, 3, 4]:
-            context['filtered_status'] = [
-                (2, "Go"), (3, "NO-Go"), (4, "Consider")]
-        elif self.object.status >= 5:
-            context['filtered_status'] = [
-                (5, "Submitted"), (6, "Lost"), (7, "Won"), (8, "Cancelled"), (9, "Assumed Lost"), (10, "N/A")]
-            if self.object.opp_type.lower() == "eoi" and self.object.status == 7:
-                context['filtered_status'] += [(11, "Transfer to RFP")]
+        context['filtered_status'] = get_allowed_next_statuses(
+            current_opportunity)
 
         return context
 

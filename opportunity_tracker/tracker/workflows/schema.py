@@ -140,11 +140,6 @@ def _validate_transitions(
                 )
             seen_targets.add(to_slug)
 
-            # Optional guardrail: avoid no-op transitions like submitted -> submitted.
-            if to_slug == from_slug:
-                raise ValueError(
-                    f"Self transition '{from_slug} -> {to_slug}' is not allowed")
-
 
 def _validate_required_fields(
     statuses: Mapping[str, Any], required_fields: Mapping[str, Any]
@@ -220,6 +215,8 @@ def _validate_transition_conditions(
             raise ValueError(
                 f"transition_conditions['{edge_key}'].field must be a non-empty string"
             )
+
+
 # Helper function for the rest of the app
 
 
