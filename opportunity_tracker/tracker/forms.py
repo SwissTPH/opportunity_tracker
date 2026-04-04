@@ -185,7 +185,7 @@ class UpdateOpportunityForm(forms.ModelForm):
 
 
 class UpdateStatusForm(forms.ModelForm):
-    result_date = forms.DateField(required=False,
+    result_date = forms.DateField(label="Result Date", required=False,
                                   widget=forms.DateInput(
                                       attrs={'class': 'form-control', 'type': 'date', 'max': datetime.date.today().isoformat(), 'placeholder': 'dd/mm/yyyy'})
                                   )
@@ -238,7 +238,11 @@ class UpdateStatusForm(forms.ModelForm):
         # Drive required-field validation from workflow config, not hardcoded numbers.
         for field_name in get_required_fields(status):
             if not cleaned_data.get(field_name):
-                label = self.fields[field_name].label if field_name in self.fields else field_name
+                if field_name in self.fields:
+                    label = self.fields[field_name].label or field_name.replace(
+                        "_", " ").title()
+                else:
+                    label = field_name.replace("_", " ").title()
                 self.add_error(field_name, f"{label} is required")
 
         return cleaned_data

@@ -400,12 +400,13 @@ class OpportunityStatusUpdateViewTest(TestCase):
         """Test that context contains filtered status choices based on current status."""
         self.client.login(username='testuser', password='testpass123')
 
-        # For status 1-4, should show Go, NO-Go, Consider
+        # For status=Entered, expect decision options from workflow-backed choices.
         response = self.client.get(
             reverse('udpate_status', kwargs={'pk': self.opportunity.pk})
         )
+        status_labels = dict(self.opportunity.get_valid_status_choices())
         self.assertEqual(response.context['filtered_status'], [
-                         (2, "Go"), (3, "NO-Go"), (4, "Consider")])
+                         (2, status_labels[2]), (3, status_labels[3]), (4, status_labels[4])])
 
         # Update to submitted
         self.opportunity.status = 5
@@ -414,8 +415,13 @@ class OpportunityStatusUpdateViewTest(TestCase):
         response = self.client.get(
             reverse('udpate_status', kwargs={'pk': self.opportunity.pk})
         )
-        self.assertIn((5, "Submitted"), response.context['filtered_status'])
-        self.assertIn((6, "Lost"), response.context['filtered_status'])
+        self.assertEqual(response.context['filtered_status'], [
+            (7, status_labels[7]),
+            (6, status_labels[6]),
+            (8, status_labels[8]),
+            (9, status_labels[9]),
+            (10, status_labels[10]),
+        ])
 
     def test_status_update_to_lost_requires_result_date(self):
         """Test that updating status to Lost requires result_date."""
