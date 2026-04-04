@@ -214,7 +214,11 @@ class UpdateStatusForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        workflow_choices = get_status_choices(get_active_workflow())
+        # Derive choices from the active workflow via the Opportunity instance.
+        if self.instance and self.instance.pk:
+            workflow_choices = self.instance.get_valid_status_choices()
+        else:
+            workflow_choices = get_status_choices(get_active_workflow())
         self.fields['status'].choices = [
             choice for choice in workflow_choices if choice[0] != 1
         ]
@@ -308,8 +312,9 @@ class OpportunitySearchForm(forms.Form):
         from django.urls import reverse
         super().__init__(*args, **kwargs)
 
+        # Use a bare Opportunity instance to delegate to the active workflow.
         self.fields['status'].choices = [
-            ('', '')] + get_status_choices(get_active_workflow())
+            ('', '')] + Opportunity().get_valid_status_choices()
 
         # Set the htmx attributes
         for field_name in self.fields:

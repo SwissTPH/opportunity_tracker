@@ -215,6 +215,16 @@ class Opportunity(models.Model):
         # Call the auto-generated method directly
         return dict(self.OPP_STATUS).get(self.status, str(self.status))
 
+    def get_valid_status_choices(self):
+        """Return (id, label) pairs for all statuses in the active workflow.
+
+        Forms use this so the available options always reflect the installed
+        workflow definition rather than the hardcoded OPP_STATUS list.
+        """
+        from tracker.workflows.registry import get_active_workflow
+        from tracker.workflows.schema import get_status_choices
+        return get_status_choices(get_active_workflow())
+
     def get_transferred_opportunity(self):
         """Get the RFP opportunity that was created from this opportunity transfer"""
         return self.transferred.first() if self.status == 11 else None
