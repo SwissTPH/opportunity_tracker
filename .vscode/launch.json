@@ -1,0 +1,50 @@
+{
+  "version": "0.2.0",
+  "inputs": [
+    {
+      "id": "moduleName",
+      "type": "pickString",
+      "description": "Provide module name to test",
+      "options": [
+        "accounts",
+        "ai_core",
+        "core",
+        "dashboard",
+        "notification",
+        "reports",
+        "tracker"
+      ]
+    }
+  ],
+  "configurations": [
+    {
+      "name": "Python Debugger: Django",
+      "type": "debugpy",
+      "request": "launch",
+      "args": ["runserver"],
+      "django": true,
+      "autoStartBrowser": false,
+      "program": "${workspaceFolder}\\opportunity_tracker\\manage.py",
+      "env": {
+        "DJANGO_ENV": "development"
+      }
+    },
+    {
+      "name": "Test",
+      "type": "debugpy",
+      "request": "launch",
+      "args": [
+        "test",
+        "--timing",
+        "--settings",
+        "opportunity_tracker.test_settings",
+        "${input:moduleName}"
+      ],
+      "django": true,
+      "program": "${workspaceFolder}\\opportunity_tracker\\manage.py",
+      "env": {
+        "DJANGO_ENV": "development"
+      }
+    }
+  ]
+}

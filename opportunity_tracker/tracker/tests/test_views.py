@@ -220,6 +220,8 @@ class OpportunityCreateViewTest(TestCase):
 
     def test_opportunity_create_with_transfer(self):
         """Test creating RFP from EOI transfer."""
+        from tracker.workflows.registry import get_active_workflow
+        from tracker.workflows.schema import get_status_slug_to_id
         self.client.login(username='testuser', password='testpass123')
 
         # Create parent EOI
@@ -267,9 +269,13 @@ class OpportunityCreateViewTest(TestCase):
         child_rfp = Opportunity.objects.get(ref_no='RFP-2024-001')
         self.assertEqual(child_rfp.parent, parent_eoi)
 
-        # Check parent status updated
+        # Check parent status updated to transfer_to_rfp (resolved from active workflow)
+        transfer_id = get_status_slug_to_id(
+            get_active_workflow()).get('transfer_to_rfp')
         parent_eoi.refresh_from_db()
-        self.assertEqual(parent_eoi.status, 11)  # Transferred to RFP
+        self.assertIsNotNone(
+            transfer_id, "Active workflow must define transfer_to_rfp")
+        self.assertEqual(parent_eoi.status, transfer_id)
 
 
 class OpportunityUpdateViewTest(TestCase):
@@ -363,6 +369,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser', password='testpass123')
         self.unit = Unit.objects.create(code="IT", name="IT Unit")
+        self.institute = Institute.objects.create(code="MIT", name="MIT")
         self.country, _ = Country.objects.get_or_create(
             code="US", defaults={"name": "United States"})
         self.opportunity = Opportunity.objects.create(
@@ -531,6 +538,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
             'result_date': result_date_value.isoformat(),
             'countries': [self.country.code],
             'submission_date': date.today().isoformat(),
+            'lead_institute': self.institute.id,
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
         }
@@ -561,6 +569,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
             'result_date': result_date_value.isoformat(),
             'countries': [self.country.code],
             'submission_date': (date.today() - timedelta(days=30)).isoformat(),
+            'lead_institute': self.institute.id,
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
         }
