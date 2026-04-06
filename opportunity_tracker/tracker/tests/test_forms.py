@@ -371,7 +371,7 @@ class UpdateStatusFormTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('result_date', form.errors)
         self.assertEqual(form.errors['result_date']
-                         [0], 'Result date is required')
+                         [0], 'Result Date is required')
 
     def test_status_form_result_date_required_for_won_status(self):
         """Test that result_date is required when status is 7 (Won)."""
@@ -382,7 +382,7 @@ class UpdateStatusFormTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('result_date', form.errors)
         self.assertEqual(form.errors['result_date']
-                         [0], 'Result date is required')
+                         [0], 'Result Date is required')
 
     def test_status_form_result_date_required_for_cancelled_status(self):
         """Test that result_date is required when status is 8 (Cancelled)."""
@@ -393,7 +393,7 @@ class UpdateStatusFormTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('result_date', form.errors)
         self.assertEqual(form.errors['result_date']
-                         [0], 'Result date is required')
+                         [0], 'Result Date is required')
 
     def test_status_form_result_date_required_for_assumed_lost_status(self):
         """Test that result_date is required when status is 9 (Assumed Lost)."""
@@ -404,7 +404,7 @@ class UpdateStatusFormTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('result_date', form.errors)
         self.assertEqual(form.errors['result_date']
-                         [0], 'Result date is required')
+                         [0], 'Result Date is required')
 
     def test_status_form_result_date_valid_for_lost_status(self):
         """Test that form is valid when result_date is provided for Lost status."""

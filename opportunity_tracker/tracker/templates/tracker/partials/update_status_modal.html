@@ -11,7 +11,7 @@
   {% csrf_token %}
   <div class="modal-header">
     <h5 class="modal-title" id="updateStatusModalLabel">
-      {% if form.status.value == 1 %} Go/No-Go {% elif form.status.value == 5 %}
+      {% if current_status_id <= 4 %} Go/No-Go {% elif current_status_id >= 5 %}
       Result{% endif %}
     </h5>
     <button
@@ -103,7 +103,7 @@
         </div>
 
         {% with
-        selected_status=update_status_form.data.status|default:form.status.value
+        selected_status=update_status_form.data.status|default:current_status_id
         %} {% if selected_status|add:0 >= 5 and selected_status|add:0 <= 7 %}
         <div class="mb-3 form-floating col-12">
           {{update_status_form.result_note|add_class:"form-control"}}
@@ -127,8 +127,8 @@
       id="confirmUpdateStatusButton"
       onclick="submitForm()"
     >
-      {% if 1 <= form.status.value <= 4 %} Update Status {% elif
-      form.status.value == 5 %} Update Result{% endif %} <img id="spinnerUpdate"
+      {% if current_status_id <= 4 %} Update Status {% elif
+      current_status_id >= 5 %} Update Result{% endif %} <img id="spinnerUpdate"
       src="{% static "images/bouncing-circles.svg" %}" alt=""
       style="height:25px;" class="htmx-indicator" />
     </button>
@@ -150,7 +150,7 @@
         // Update button text based on selected status
         if (selectedStatus === "11") {
           $("#confirmUpdateStatusButton").text("Transfer to RFP");
-        } else if ({{ form.status.value }} <= 4) {
+        } else if ({{ current_status_id }} <= 4) {
           $("#confirmUpdateStatusButton").text("Update Status");
         } else {
           $("#confirmUpdateStatusButton").text("Update Result");

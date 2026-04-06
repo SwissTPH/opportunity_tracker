@@ -1,25 +1,12 @@
 from django import forms
 
 from accounts.models import User
-from tracker.models import Client, FundingAgency, Unit, Institute, Currency
+from tracker.models import Client, FundingAgency, Unit, Institute, Currency, Opportunity
 
 
 class OpportunityFilterForm(forms.Form):
     OPP_TYPE = [("", "All"), ("EOI", "EOI"),
                 ("RFP", "RFP"), ("FC", "Fore-cast")]
-    OPP_STATUS = [
-        (None, "All"),
-        (1, "Entered"),
-        (2, "Go"),
-        (3, "NO-Go"),
-        (4, "Consider"),
-        (5, "Submitted"),
-        (6, "Lost"),
-        (7, "Won"),
-        (8, "Cancelled"),
-        (9, "Assumed Lost"),
-        (10, "N/A"),
-    ]
     COMPETITION_TYPE = [
         (None, "All"),
         (False, "Competitive"),
@@ -55,7 +42,7 @@ class OpportunityFilterForm(forms.Form):
         Institute.objects.all(), empty_label="All", required=False)
     proposal_lead = forms.ModelChoiceField(
         User.objects.all(), empty_label="All", required=False)
-    status = forms.ChoiceField(choices=OPP_STATUS, required=False)
+    status = forms.ChoiceField(choices=(), required=False)
     submission_date_from = forms.DateField(
         required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     submission_date_to = forms.DateField(
@@ -72,6 +59,8 @@ class OpportunityFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(OpportunityFilterForm, self).__init__(*args, **kwargs)
+        self.fields['status'].choices = [
+            (None, 'All')] + Opportunity().get_valid_status_choices()
         self.fields['created_by'].queryset = User.objects.all().order_by(
             'first_name', 'last_name')
         self.fields['created_by'].label_from_instance = lambda obj: f"{

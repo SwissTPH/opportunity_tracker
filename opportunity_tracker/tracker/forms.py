@@ -2,6 +2,9 @@ import datetime
 from django.forms.widgets import Select
 from typing import Any, Mapping
 from django import forms
+from tracker.workflows.service import get_required_fields
+from tracker.workflows.registry import get_active_workflow
+from tracker.workflows.schema import get_status_choices
 from django.core.files.base import File
 from django.db.models.base import Model
 from django.forms.utils import ErrorList
@@ -30,11 +33,6 @@ class LoginForm(forms.Form):
 
 
 class OpportunityForm(forms.ModelForm):
-    OPP_STATUS = [
-        (2, "Go"),
-        (3, "NO-Go"),
-        (4, "Consider"),
-    ]
     funding_agency = FundingAgencyChoiceField(
         queryset=FundingAgency.objects.all(), required=False)
     client = ClientChoiceField(
@@ -187,19 +185,7 @@ class UpdateOpportunityForm(forms.ModelForm):
 
 
 class UpdateStatusForm(forms.ModelForm):
-    OPP_STATUS = [
-        (2, "Go"),
-        (3, "NO-Go"),
-        (4, "Consider"),
-        (5, "Submitted"),
-        (6, "Lost"),
-        (7, "Won"),
-        (8, "Cancelled"),
-        (9, "Assumed Lost"),
-        (10, "N/A"),
-        (11, "Transfer to RFP")
-    ]
-    result_date = forms.DateField(required=False,
+    result_date = forms.DateField(label="Result Date", required=False,
                                   widget=forms.DateInput(
                                       attrs={'class': 'form-control', 'type': 'date', 'max': datetime.date.today().isoformat(), 'placeholder': 'dd/mm/yyyy'})
                                   )
@@ -215,7 +201,7 @@ class UpdateStatusForm(forms.ModelForm):
                                        ))
 
     status = forms.ChoiceField(
-        widget=forms.RadioSelect, label="status", choices=OPP_STATUS, required=True, error_messages={'required': 'Select at least one option'})
+        widget=forms.RadioSelect, label="status", choices=(), required=True, error_messages={'required': 'Select at least one option'})
 
     class Meta:
         model = Opportunity
@@ -228,6 +214,14 @@ class UpdateStatusForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Derive choices from the active workflow via the Opportunity instance.
+        if self.instance and self.instance.pk:
+            workflow_choices = self.instance.get_valid_status_choices()
+        else:
+            workflow_choices = get_status_choices(get_active_workflow())
+        self.fields['status'].choices = [
+            choice for choice in workflow_choices if choice[0] != 1
+        ]
         self.fields['proposal_lead'].queryset = User.objects.all()
         self.fields['proposal_lead'].label_from_instance = lambda obj: f"{obj.first_name} {
             obj.last_name}" if obj.first_name and obj.last_name else obj.username
@@ -241,17 +235,15 @@ class UpdateStatusForm(forms.ModelForm):
         cleaned_data = super().clean()
         status = int(cleaned_data.get("status", 0))
 
-        # make proposal_lead and lead_unit mandatory if the status is Go
-        if status == 2:
-            if not cleaned_data.get("proposal_lead"):
-                self.add_error("proposal_lead", "Proposal Lead is required")
-            if not cleaned_data.get("lead_unit"):
-                self.add_error("lead_unit", "Lead Unit is required")
-
-        # Make the result_date mandatory if the status is 6, 7, 8 or 9
-        if status in (6, 7, 8, 9):
-            if not cleaned_data.get("result_date"):
-                self.add_error("result_date", "Result date is required")
+        # Drive required-field validation from workflow config, not hardcoded numbers.
+        for field_name in get_required_fields(status):
+            if not cleaned_data.get(field_name):
+                if field_name in self.fields:
+                    label = self.fields[field_name].label or field_name.replace(
+                        "_", " ").title()
+                else:
+                    label = field_name.replace("_", " ").title()
+                self.add_error(field_name, f"{label} is required")
 
         return cleaned_data
 
@@ -304,7 +296,7 @@ class OpportunitySearchForm(forms.Form):
     client = ClientChoiceField(
         queryset=Client.objects.all(), required=False, label='Client')
     status = forms.ChoiceField(
-        choices=[('', '')] + Opportunity.OPP_STATUS, required=False, label="Status")
+        choices=(), required=False, label="Status")
     opp_type = forms.ChoiceField(
         choices=[('', '')] + Opportunity.OPP_TYPE, required=False, label="Type")
     country = forms.ModelChoiceField(
@@ -323,6 +315,10 @@ class OpportunitySearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         from django.urls import reverse
         super().__init__(*args, **kwargs)
+
+        # Use a bare Opportunity instance to delegate to the active workflow.
+        self.fields['status'].choices = [
+            ('', '')] + Opportunity().get_valid_status_choices()
 
         # Set the htmx attributes
         for field_name in self.fields:
