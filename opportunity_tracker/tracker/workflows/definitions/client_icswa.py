@@ -23,8 +23,8 @@ WORKFLOW = {
         "na": {"id": 10, "label": "N/A", "group": "outcome", "terminal": True},
 
         # Post result
-        "on_going": {"id": 11, "label": "On going", "group": "post_result", "terminate": True},
-        "finished": {"id": 12, "label": "Finished", "group": "post_result", "terminate": True},
+        "on_going": {"id": 12, "label": "On going", "group": "post_result", "terminate": True},
+        "finished": {"id": 13, "label": "Finished", "group": "post_result", "terminate": True},
 
     },
     "transitions": {
@@ -46,7 +46,8 @@ WORKFLOW = {
         "assumed_lost": ["submitted", "won", "lost", "cancelled", "assumed_lost", "na"],
         "na": ["submitted", "won", "lost", "cancelled", "assumed_lost", "na"],
 
-        # Terminal-like states still expose options by business choice.
+        # Post result options
+        "on_going": ["on_going", "finished"],
     },
     "transition_conditions": {
 

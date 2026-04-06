@@ -2,7 +2,7 @@ import datetime
 from django.forms.widgets import Select
 from typing import Any, Mapping
 from django import forms
-from tracker.workflows.service import get_required_fields
+from tracker.workflows.service import get_required_fields, get_cumulative_required_fields
 from tracker.workflows.registry import get_active_workflow
 from tracker.workflows.schema import get_status_choices
 from django.core.files.base import File
@@ -123,24 +123,23 @@ class UpdateOpportunityForm(forms.ModelForm):
 
         status = int(cleaned_data.get("status", 0))
 
-        # make proposal_lead and lead_unit mandatory if the status is Go
-        if status >= 2 and not (status == 3 or status == 4):
-            if not cleaned_data.get("proposal_lead"):
-                self.add_error("proposal_lead", "Proposal Lead is required")
-            if not cleaned_data.get("lead_unit"):
-                self.add_error("lead_unit", "Lead Unit is required")
-
-        if status >= 5:
-            if not cleaned_data.get("submission_date"):
-                self.add_error("submission_date",
-                               "Submission date is required")
-
-                if not cleaned_data.get("lead_institute"):
-                    self.add_error("lead_institute",
-                                   "Lead organization is required")
-
-        # Note: result_date validation is handled in UpdateStatusForm only
-        # It's not validated here because result_date is not part of this form's fields
+        # Drive required-field validation from workflow config, not hardcoded numbers.
+        # Only validate fields that are actually included in this form.
+        # (result_date is intentionally excluded — it lives in UpdateStatusForm only.)
+        for field_name in get_cumulative_required_fields(status):
+            if field_name not in self.fields:
+                continue
+            # Accept the value from POST data OR from the already-persisted instance.
+            # This prevents false validation failures when a status-only modal submits
+            # only a subset of fields that were already collected in earlier transitions.
+            value = cleaned_data.get(field_name) or (
+                getattr(self.instance, field_name,
+                        None) if self.instance else None
+            )
+            if not value:
+                label = self.fields[field_name].label or field_name.replace(
+                    "_", " ").title()
+                self.add_error(field_name, f"{label} is required")
 
         currency = cleaned_data.get("currency")
         proposal_amount = cleaned_data.get("proposal_amount")

@@ -135,6 +135,8 @@
   </div>
 </form>
 <script>
+  const transferToRfpId = {{ transfer_to_rfp_id|default:"null" }};
+
   $(document).ready(function () {
     $('input[name="status"]')
       .on("change", function () {
@@ -148,7 +150,7 @@
         }
 
         // Update button text based on selected status
-        if (selectedStatus === "11") {
+        if (transferToRfpId !== null && selectedStatus === String(transferToRfpId)) {
           $("#confirmUpdateStatusButton").text("Transfer to RFP");
         } else if ({{ current_status_id }} <= 4) {
           $("#confirmUpdateStatusButton").text("Update Status");
@@ -189,7 +191,7 @@
 
     console.log("Updating form action. Selected status:", selectedStatus);
 
-    if (selectedStatus === "11") {
+    if (transferToRfpId !== null && selectedStatus === String(transferToRfpId)) {
       // If Transfer to RFP is selected, set action to transfer URL
       console.log("Setting transfer URL");
       form.setAttribute('hx-post', '{% url "transfer_opportunity" opportunity.id %}');
@@ -213,7 +215,7 @@
     console.log("Submitting form with status:", selectedStatus);
     console.log("Form action URL:", form.getAttribute('hx-post'));
 
-    if (selectedStatus === "11") {
+    if (transferToRfpId !== null && selectedStatus === String(transferToRfpId)) {
       // For transfer, use fetch to ensure we get the redirect
       console.log("Using fetch for transfer");
 

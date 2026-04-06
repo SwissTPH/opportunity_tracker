@@ -27,6 +27,8 @@ from .forms import (OpportunityDetailForm, OpportunityDetailAnonymousForm, Oppor
 from .models import Opportunity, OpportunityFile
 
 from .serializers import OpportunitySerializer
+from .workflows.registry import get_active_workflow
+from .workflows.schema import get_status_slug_to_id
 from .workflows.service import get_allowed_next_statuses, get_current_status_slug, get_current_status_group
 
 
@@ -188,8 +190,11 @@ class OpportunityCreateView(CreateView):
             # If this is a transfer operation, update the parent opportunity status to "Transfer to RFP"
             # Only update status after the new RFP opportunity is successfully created
             if parent_opportunity and self.request.GET.get('is_transfer') == 'true':
-                parent_opportunity.status = 11  # Transfer to RFP
-                parent_opportunity.save()
+                transfer_id = get_status_slug_to_id(
+                    get_active_workflow()).get('transfer_to_rfp')
+                if transfer_id is not None:
+                    parent_opportunity.status = transfer_id
+                    parent_opportunity.save()
 
         headers = {"HX-Trigger": "refresh_opp_list"}
         if self.request.htmx:
@@ -407,6 +412,10 @@ class OpportunityStatusUpdateView(UpdateView):
 
         context['filtered_status'] = get_allowed_next_statuses(
             current_opportunity)
+
+        wf = get_active_workflow()
+        context['transfer_to_rfp_id'] = get_status_slug_to_id(
+            wf).get('transfer_to_rfp')
 
         return context
 
