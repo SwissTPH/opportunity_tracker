@@ -199,4 +199,4 @@ UNFOLD = {
 }
 
 # Workflow
-WORKFLOW_DEFINITION = "tracker.workflows.definitions.default"
+WORKFLOW_DEFINITION = "tracker.workflows.definitions.client_icswa"
