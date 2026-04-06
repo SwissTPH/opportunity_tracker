@@ -146,7 +146,7 @@ class Opportunity(models.Model):
         (10, "N/A"),
         (11, "Transfer to RFP"),
         (12, "On going"),
-        (11, "Finished"),
+        (13, "Finished"),
     ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ref_no = models.CharField(
