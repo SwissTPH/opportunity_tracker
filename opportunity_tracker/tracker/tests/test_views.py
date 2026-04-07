@@ -604,6 +604,51 @@ class OpportunityStatusUpdateViewTest(TestCase):
         self.assertEqual(self.opportunity.status, 2)
         self.assertIsNone(self.opportunity.result_date)
 
+    def test_go_validation_failure_does_not_show_result_date_errors(self):
+        """
+        Regression: when Go transition fails (missing lead_unit/proposal_lead),
+        the re-rendered modal must NOT show errors for result_date,
+        project_start_date or project_end_date — those fields are irrelevant
+        for a Go transition.
+        """
+        self.client.login(username='testuser', password='testpass123')
+        form_data = {
+            'status': '2',  # Go — deliberately omit lead_unit and proposal_lead
+        }
+        response = self.client.post(
+            reverse('udpate_status', kwargs={'pk': self.opportunity.pk}),
+            data=form_data,
+            HTTP_HX_REQUEST='true',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context['update_status_form']
+        # Must have exactly these two errors and nothing else
+        self.assertEqual(set(form.errors.keys()), {
+                         'lead_unit', 'proposal_lead'})
+
+    def test_status_form_data_preserved_on_rerender(self):
+        """
+        Regression: after a failed POST the re-rendered modal must carry the
+        submitted status value in update_status_form.data so the template can
+        re-check the correct radio button.
+        """
+        self.client.login(username='testuser', password='testpass123')
+        form_data = {
+            'status': '2',  # Go — deliberately omit required fields to trigger failure
+        }
+        response = self.client.post(
+            reverse('udpate_status', kwargs={'pk': self.opportunity.pk}),
+            data=form_data,
+            HTTP_HX_REQUEST='true',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context['update_status_form']
+        # The submitted status value must be in form.data so the template
+        # can compare it (as a string) against the choice integer via |stringformat:"s"
+        self.assertEqual(form.data.get('status'), '2')
+
 
 class OpportunitySubmitViewTest(TestCase):
     """Test cases for OpportunitySubmitView."""

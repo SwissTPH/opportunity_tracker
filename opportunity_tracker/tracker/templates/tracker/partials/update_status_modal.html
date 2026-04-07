@@ -29,8 +29,7 @@
           <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="status"
             id="status_{{choice.0}}" value="{{choice.0}}" {% if
-            update_status_form.data.status == choice.0 or
-            update_status_form.instance.status == choice.0 %}checked{% endif %}>
+            update_status_form.data.status == choice.0|stringformat:"s" or update_status_form.instance.status == choice.0 %}checked{% endif %}>
             <label class="form-check-label" for="status_{{choice.0}}"
               >{{choice.1}}</label
             >
@@ -42,7 +41,7 @@
           {%endif%}
         </div>
 
-        <div class="mb-3 onlyForGo">
+        <div class="mb-3 onlyForGo" style="{% if update_status_form.data.status == go_status_id|stringformat:'s' %}display:block{% else %}display:none{% endif %}">
           <div class="input-group">
             <div class="input-group-text">Lead Unit</div>
             {{update_status_form.lead_unit|add_class:"form-select"}}
@@ -54,7 +53,7 @@
           {%endif%}
         </div>
 
-        <div class="mb-3 onlyForGo">
+        <div class="mb-3 onlyForGo" style="{% if update_status_form.data.status == go_status_id|stringformat:'s' %}display:block{% else %}display:none{% endif %}">
           <div class="input-group">
             <div class="input-group-text">Proposal Lead</div>
             {{update_status_form.proposal_lead|add_class:"form-select"}}
@@ -66,7 +65,7 @@
           {%endif%}
         </div>
 
-        <div class="mb-3" id="result_date_container">
+        <div class="mb-3" id="result_date_container" style="{% if update_status_form.data.status in result_date_status_ids_list %}display:block{% else %}display:none{% endif %}">
           <div class="form-floating">
             {{update_status_form.result_date|add_class:"form-control"}}
             <label for="result_date" class="form-label">Result Date</label>
@@ -78,7 +77,7 @@
           {%endif%}
         </div>
 
-        <div class="mb-3" id="project_start_date_container">
+        <div class="mb-3" id="project_start_date_container" style="{% if update_status_form.data.status == won_status_id|stringformat:'s' %}display:block{% else %}display:none{% endif %}">
           <div class="form-floating">
             {{update_status_form.project_start_date|add_class:"form-control"}}
             <label for="project_start_date" class="form-label">Project Start Date</label>
@@ -90,7 +89,7 @@
           {%endif%}
         </div>
 
-        <div class="mb-3" id="project_end_date_container">
+        <div class="mb-3" id="project_end_date_container" style="{% if update_status_form.data.status == won_status_id|stringformat:'s' %}display:block{% else %}display:none{% endif %}">
           <div class="form-floating">
             {{update_status_form.project_end_date|add_class:"form-control"}}
             <label for="project_end_date" class="form-label">Project End Date</label>
@@ -136,17 +135,19 @@
 </form>
 <script>
   const transferToRfpId = {{ transfer_to_rfp_id|default:"null" }};
+  const goStatusId = {{ go_status_id|default:"null" }};
+  const wonStatusId = {{ won_status_id|default:"null" }};
+  const resultDateStatusIds = {{ result_date_status_ids|safe }};
 
-  $(document).ready(function () {
+  (function () {
     $('input[name="status"]')
       .on("change", function () {
         const selectedStatus = $("input[name='status']:checked").val();
 
-        if (selectedStatus === "2") {
-          // "Go" corresponds to value 2
-          $(".onlyForGo").show(); // Show the control
+        if (goStatusId !== null && selectedStatus === String(goStatusId)) {
+          $(".onlyForGo").show();
         } else {
-          $(".onlyForGo").hide(); // Hide the control
+          $(".onlyForGo").hide();
         }
 
         // Update button text based on selected status
@@ -158,17 +159,13 @@
           $("#confirmUpdateStatusButton").text("Update Result");
         }
 
-        // Show the result date field only for the statuses Lost, Won, Cancelled and Assumed Lost
-        if (["6", "7", "8", "9"].includes(selectedStatus)) {
+        if (resultDateStatusIds.includes(selectedStatus)) {
           $("#result_date_container").show();
-
         } else {
           $("#result_date_container").hide();
-
         }
 
-        // Show the project start and end date fields only for the status Won
-        if (selectedStatus === "7") {
+        if (wonStatusId !== null && selectedStatus === String(wonStatusId)) {
           $("#project_start_date_container").show();
           $("#project_end_date_container").show();
         } else {
@@ -183,7 +180,7 @@
 
     // Also set the form action immediately when modal loads
     updateFormAction();
-  });
+  })();
   function updateFormAction() {
     const form = document.getElementById('updateStatusForm');
     const selectedStatus = $("input[name='status']:checked").val();

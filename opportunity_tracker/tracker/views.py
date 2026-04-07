@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import zipfile
@@ -317,10 +318,20 @@ class OpportunityStatusUpdateView(UpdateView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
 
+        # hx-include="#opportunityForm" causes the parent form's hidden
+        # status field (current DB status) to be appended to the POST data
+        # after the modal radio button value.  Django QueryDict.get() returns
+        # the *last* value, which would be the wrong one.  Take the first
+        # occurrence instead — that is always the modal radio selection.
+        post_data = request.POST
+        if len(request.POST.getlist('status')) > 1:
+            post_data = request.POST.copy()
+            post_data.setlist('status', [request.POST.getlist('status')[0]])
+
         # Process both the status form and the main opportunity form
-        status_form = self.get_form()
+        status_form = UpdateStatusForm(post_data, instance=self.object)
         main_form = UpdateOpportunityForm(
-            request.POST, request.FILES, instance=self.object)
+            post_data, request.FILES, instance=self.object)
 
         # Validate both forms separately to ensure both are checked
         status_valid = status_form.is_valid()
@@ -414,8 +425,17 @@ class OpportunityStatusUpdateView(UpdateView):
             current_opportunity)
 
         wf = get_active_workflow()
-        context['transfer_to_rfp_id'] = get_status_slug_to_id(
-            wf).get('transfer_to_rfp')
+        slug_to_id = get_status_slug_to_id(wf)
+        context['transfer_to_rfp_id'] = slug_to_id.get('transfer_to_rfp')
+        context['go_status_id'] = slug_to_id.get('go')
+        context['won_status_id'] = slug_to_id.get('won')
+        result_date_ids_list = [
+            str(slug_to_id[s])
+            for s, fields in wf.get('required_fields', {}).items()
+            if 'result_date' in fields and s in slug_to_id
+        ]
+        context['result_date_status_ids'] = json.dumps(result_date_ids_list)
+        context['result_date_status_ids_list'] = result_date_ids_list
 
         return context
 
