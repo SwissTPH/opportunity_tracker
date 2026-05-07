@@ -313,6 +313,7 @@ class UpdateOpportunityFormTest(TestCase):
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
             'submission_date': date.today().isoformat(),
+            'lead_institute': self.institute.id,
         }
         form = UpdateOpportunityForm(data=form_data, instance=self.opportunity)
         self.assertTrue(form.is_valid())

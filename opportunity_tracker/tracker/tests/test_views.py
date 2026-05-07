@@ -220,6 +220,8 @@ class OpportunityCreateViewTest(TestCase):
 
     def test_opportunity_create_with_transfer(self):
         """Test creating RFP from EOI transfer."""
+        from tracker.workflows.registry import get_active_workflow
+        from tracker.workflows.schema import get_status_slug_to_id
         self.client.login(username='testuser', password='testpass123')
 
         # Create parent EOI
@@ -267,9 +269,13 @@ class OpportunityCreateViewTest(TestCase):
         child_rfp = Opportunity.objects.get(ref_no='RFP-2024-001')
         self.assertEqual(child_rfp.parent, parent_eoi)
 
-        # Check parent status updated
+        # Check parent status updated to transfer_to_rfp (resolved from active workflow)
+        transfer_id = get_status_slug_to_id(
+            get_active_workflow()).get('transfer_to_rfp')
         parent_eoi.refresh_from_db()
-        self.assertEqual(parent_eoi.status, 11)  # Transferred to RFP
+        self.assertIsNotNone(
+            transfer_id, "Active workflow must define transfer_to_rfp")
+        self.assertEqual(parent_eoi.status, transfer_id)
 
 
 class OpportunityUpdateViewTest(TestCase):
@@ -363,6 +369,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser', password='testpass123')
         self.unit = Unit.objects.create(code="IT", name="IT Unit")
+        self.institute = Institute.objects.create(code="MIT", name="MIT")
         self.country, _ = Country.objects.get_or_create(
             code="US", defaults={"name": "United States"})
         self.opportunity = Opportunity.objects.create(
@@ -531,6 +538,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
             'result_date': result_date_value.isoformat(),
             'countries': [self.country.code],
             'submission_date': date.today().isoformat(),
+            'lead_institute': self.institute.id,
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
         }
@@ -561,6 +569,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
             'result_date': result_date_value.isoformat(),
             'countries': [self.country.code],
             'submission_date': (date.today() - timedelta(days=30)).isoformat(),
+            'lead_institute': self.institute.id,
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
         }
@@ -594,6 +603,51 @@ class OpportunityStatusUpdateViewTest(TestCase):
         self.opportunity.refresh_from_db()
         self.assertEqual(self.opportunity.status, 2)
         self.assertIsNone(self.opportunity.result_date)
+
+    def test_go_validation_failure_does_not_show_result_date_errors(self):
+        """
+        Regression: when Go transition fails (missing lead_unit/proposal_lead),
+        the re-rendered modal must NOT show errors for result_date,
+        project_start_date or project_end_date — those fields are irrelevant
+        for a Go transition.
+        """
+        self.client.login(username='testuser', password='testpass123')
+        form_data = {
+            'status': '2',  # Go — deliberately omit lead_unit and proposal_lead
+        }
+        response = self.client.post(
+            reverse('udpate_status', kwargs={'pk': self.opportunity.pk}),
+            data=form_data,
+            HTTP_HX_REQUEST='true',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context['update_status_form']
+        # Must have exactly these two errors and nothing else
+        self.assertEqual(set(form.errors.keys()), {
+                         'lead_unit', 'proposal_lead'})
+
+    def test_status_form_data_preserved_on_rerender(self):
+        """
+        Regression: after a failed POST the re-rendered modal must carry the
+        submitted status value in update_status_form.data so the template can
+        re-check the correct radio button.
+        """
+        self.client.login(username='testuser', password='testpass123')
+        form_data = {
+            'status': '2',  # Go — deliberately omit required fields to trigger failure
+        }
+        response = self.client.post(
+            reverse('udpate_status', kwargs={'pk': self.opportunity.pk}),
+            data=form_data,
+            HTTP_HX_REQUEST='true',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context['update_status_form']
+        # The submitted status value must be in form.data so the template
+        # can compare it (as a string) against the choice integer via |stringformat:"s"
+        self.assertEqual(form.data.get('status'), '2')
 
 
 class OpportunitySubmitViewTest(TestCase):

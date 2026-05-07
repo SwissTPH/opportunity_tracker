@@ -71,6 +71,47 @@ def get_required_fields(target_status_id: int) -> List[str]:
     return list(wf["required_fields"].get(target_slug, []))
 
 
+def _get_reachable_slugs(wf: dict, from_slug: str) -> set:
+    """Return all slugs reachable from `from_slug` via transitions (including itself)."""
+    transitions = wf["transitions"]
+    visited: set = set()
+    queue = [from_slug]
+    while queue:
+        slug = queue.pop(0)
+        if slug in visited:
+            continue
+        visited.add(slug)
+        for next_slug in transitions.get(slug, []):
+            queue.append(next_slug)
+    return visited
+
+
+def get_cumulative_required_fields(status_id: int) -> List[str]:
+    """
+    Return all fields that must be present when an opportunity is in a given
+    status — accumulating requirements from every milestone status that was
+    passed through to reach it.
+
+    For example, an opportunity in 'submitted' status must have both the
+    'go' requirements (proposal_lead, lead_unit) and the 'submitted'
+    requirements (submission_date, lead_institute).
+    """
+    wf = get_active_workflow()
+    current_slug = get_status_id_to_slug(wf).get(status_id)
+    if not current_slug:
+        return []
+
+    required_fields_map = wf.get("required_fields", {})
+    result: List[str] = []
+    for milestone_slug, fields in required_fields_map.items():
+        reachable = _get_reachable_slugs(wf, milestone_slug)
+        if current_slug in reachable:
+            for f in fields:
+                if f not in result:
+                    result.append(f)
+    return result
+
+
 def get_current_status_group(opportunity) -> str:
     """
     Return the group of the opportunity's current status (e.g. 'initial',

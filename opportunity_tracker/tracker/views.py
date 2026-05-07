@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import zipfile
@@ -27,6 +28,8 @@ from .forms import (OpportunityDetailForm, OpportunityDetailAnonymousForm, Oppor
 from .models import Opportunity, OpportunityFile
 
 from .serializers import OpportunitySerializer
+from .workflows.registry import get_active_workflow
+from .workflows.schema import get_status_slug_to_id
 from .workflows.service import get_allowed_next_statuses, get_current_status_slug, get_current_status_group
 
 
@@ -188,8 +191,11 @@ class OpportunityCreateView(CreateView):
             # If this is a transfer operation, update the parent opportunity status to "Transfer to RFP"
             # Only update status after the new RFP opportunity is successfully created
             if parent_opportunity and self.request.GET.get('is_transfer') == 'true':
-                parent_opportunity.status = 11  # Transfer to RFP
-                parent_opportunity.save()
+                transfer_id = get_status_slug_to_id(
+                    get_active_workflow()).get('transfer_to_rfp')
+                if transfer_id is not None:
+                    parent_opportunity.status = transfer_id
+                    parent_opportunity.save()
 
         headers = {"HX-Trigger": "refresh_opp_list"}
         if self.request.htmx:
@@ -312,10 +318,20 @@ class OpportunityStatusUpdateView(UpdateView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
 
+        # hx-include="#opportunityForm" causes the parent form's hidden
+        # status field (current DB status) to be appended to the POST data
+        # after the modal radio button value.  Django QueryDict.get() returns
+        # the *last* value, which would be the wrong one.  Take the first
+        # occurrence instead — that is always the modal radio selection.
+        post_data = request.POST
+        if len(request.POST.getlist('status')) > 1:
+            post_data = request.POST.copy()
+            post_data.setlist('status', [request.POST.getlist('status')[0]])
+
         # Process both the status form and the main opportunity form
-        status_form = self.get_form()
+        status_form = UpdateStatusForm(post_data, instance=self.object)
         main_form = UpdateOpportunityForm(
-            request.POST, request.FILES, instance=self.object)
+            post_data, request.FILES, instance=self.object)
 
         # Validate both forms separately to ensure both are checked
         status_valid = status_form.is_valid()
@@ -407,6 +423,19 @@ class OpportunityStatusUpdateView(UpdateView):
 
         context['filtered_status'] = get_allowed_next_statuses(
             current_opportunity)
+
+        wf = get_active_workflow()
+        slug_to_id = get_status_slug_to_id(wf)
+        context['transfer_to_rfp_id'] = slug_to_id.get('transfer_to_rfp')
+        context['go_status_id'] = slug_to_id.get('go')
+        context['won_status_id'] = slug_to_id.get('won')
+        result_date_ids_list = [
+            str(slug_to_id[s])
+            for s, fields in wf.get('required_fields', {}).items()
+            if 'result_date' in fields and s in slug_to_id
+        ]
+        context['result_date_status_ids'] = json.dumps(result_date_ids_list)
+        context['result_date_status_ids_list'] = result_date_ids_list
 
         return context
 
