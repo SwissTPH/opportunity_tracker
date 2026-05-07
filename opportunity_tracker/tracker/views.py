@@ -3,6 +3,7 @@ import os
 import re
 import zipfile
 from typing import Any
+from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -48,7 +49,13 @@ class IndexView(View):
     template_name = "tracker/home.html"
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name)
+        current_year = datetime.now().year
+        context = {
+            # From current year down to 2024
+            "years": range(current_year, 2023, -1)
+        }
+
+        return render(request, self.template_name, context=context)
 
 
 class OpportunityListView(ListView):
