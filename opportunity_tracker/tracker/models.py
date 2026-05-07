@@ -17,6 +17,7 @@ class Entity(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ["name"]
 
     def __str__(self) -> str:
         return self.name
@@ -81,6 +82,7 @@ class Institute(Entity):
 
     class Meta:
         db_table = "institute"
+        ordering = ["name"]
 
 
 class Unit(Entity):
@@ -88,6 +90,7 @@ class Unit(Entity):
 
     class Meta:
         db_table = "unit"
+        ordering = ["name"]
 
 
 class Staff(Person):
@@ -96,6 +99,7 @@ class Staff(Person):
 
     class Meta:
         db_table = "staff"
+        ordering = ["name"]
 
 
 class Country(models.Model):
@@ -125,6 +129,7 @@ class Currency(models.Model):
     class Meta:
         db_table = "currency"
         verbose_name_plural = "currencies"
+        ordering = ["code"]
 
     def __str__(self):
         return self.code
