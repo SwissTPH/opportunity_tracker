@@ -7,7 +7,7 @@ from unfold.contrib.import_export.forms import (ExportForm, ImportForm,
                                                 SelectableFieldsExportForm)
 
 from .models import (Client, Country, Currency, FundingAgency, Institute,
-                     Opportunity, Unit)
+                     Opportunity, Unit, GoReason, NoGoReason)
 
 from .resources import ClientResource, FundingAgencyResource, InstituteResource, UnitResource
 
@@ -88,3 +88,19 @@ class OpportunityAdmin(ModelAdmin, ImportExportModelAdmin):
     export_form_class = ExportForm
     list_display = ['ref_no', 'title']
     search_fields = ['ref_no', 'title']
+
+
+@admin.register(GoReason)
+class GoReasonAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_from_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['reason']
+    search_fields = ['reason']
+
+
+@admin.register(NoGoReason)
+class NoGoReasonAdmin(ModelAdmin, ImportExportModelAdmin):
+    import_from_class = ImportForm
+    export_form_class = ExportForm
+    list_display = ['reason']
+    search_fields = ['reason']
