@@ -608,6 +608,15 @@ class OpportunityDetailView(DetailView):
 
         context['files'] = opportunity.Files.all()
 
+        # Get the decision reason go/no-go
+        if opportunity.status == 2:
+            context['reasons'] = opportunity.opportunitygoreason_set.select_related(
+                'reason')
+
+        elif opportunity.status == 3:
+            context['reasons'] = opportunity.opportunitynogoreason_set.select_related(
+                'reason')
+
         return context
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
@@ -639,6 +648,15 @@ class OpportunityDetailAnonymousView(DeleteView):
             partner.name for partner in opportunity.partners.all()]
 
         context['files'] = opportunity.Files.all()
+
+        # Get the decision reason go/no-go
+        if opportunity.status == 2:
+            context['reasons'] = opportunity.opportunitygoreason_set.select_related(
+                'reason')
+
+        elif opportunity.status == 3:
+            context['reasons'] = opportunity.opportunitynogoreason_set.select_related(
+                'reason')
 
         return context
 
