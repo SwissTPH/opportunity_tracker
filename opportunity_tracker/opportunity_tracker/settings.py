@@ -199,4 +199,5 @@ UNFOLD = {
 }
 
 # Workflow
-WORKFLOW_DEFINITION = "tracker.workflows.definitions.default"
+workflow_name = os.getenv("WORKFLOW_DEFINITION", "default")
+WORKFLOW_DEFINITION = f"tracker.workflows.definitions.{workflow_name}"
