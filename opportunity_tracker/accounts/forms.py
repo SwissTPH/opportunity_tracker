@@ -30,6 +30,8 @@ class CustomPasswordResetForm(PasswordResetForm):
         """
         subject = f"Password reset for {settings.APP_NAME}"
 
+        context["APP_NAME"] = settings.APP_NAME
+
         # Use the provided html_email_template_name if it exists
         if html_email_template_name:
             html_content = loader.render_to_string(

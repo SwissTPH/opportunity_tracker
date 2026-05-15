@@ -37,6 +37,7 @@ def send_weekly_summary(channel: str, days: int = 7):
         'date_from': date_from,
         'date_to': timezone.now(),
         'site_url': settings.SITE_URL,
+        'APP_NAME': settings.APP_NAME
     }
     email_message = render_to_string(
         'tracker/emails/weekly_summary.html', context)

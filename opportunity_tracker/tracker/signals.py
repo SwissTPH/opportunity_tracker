@@ -58,6 +58,7 @@ def _send_new_opportunity_notification(opportunity):
     context = {
         'opportunity': opportunity,
         'opportunity_url': opportunity_url,
+        'APP_NAME': settings.APP_NAME,
     }
     email_message = render_to_string(
         'tracker/emails/opportunity_created.html', context)
@@ -86,6 +87,7 @@ def _send_opportunity_update_notification(opportunity):
     context = {
         'opportunity': opportunity,
         'opportunity_url': opportunity_url,
+        'APP_NAME': settings.APP_NAME,
     }
     email_message = render_to_string(
         'tracker/emails/opportunity_update.html', context)
