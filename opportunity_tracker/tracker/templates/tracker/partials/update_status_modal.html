@@ -65,6 +65,56 @@
           {%endif%}
         </div>
 
+        <div class="mb-3 onlyForGo" style="{% if update_status_form.data.status == go_status_id|stringformat:'s' %}display:block{% else %}display:none{% endif %}">
+          <div class="input-group">
+            <div class="input-group-text">Reason</div>
+            {{update_status_form.go_reasons|add_class:"form-select"}}
+          </div>
+          {%if update_status_form.go_reasons.errors%}
+          <div class="text-danger">
+            {{update_status_form.go_reasons.errors|striptags}}
+          </div>
+          {%endif%}
+        </div>
+
+        <div class="mb-3 onlyForNoGo" style="{% if update_status_form.data.status == nogo_status_id|stringformat:'s' %}display:block{% else %}display:none{% endif %}">
+          <div class="input-group">
+            <div class="input-group-text">Reason</div>
+            {{update_status_form.nogo_reasons|add_class:"form-select"}}
+          </div>
+          {%if update_status_form.nogo_reasons.errors%}
+          <div class="text-danger">
+            {{update_status_form.nogo_reasons.errors|striptags}}
+          </div>
+          {%endif%}
+        </div>
+
+        {{ update_status_form.go_reasons_other_id }}
+        <div class="mb-3" id="go_reasons_other_container" style="display:none;">
+          <div class="form-floating">
+            {{ update_status_form.go_reasons_other_text|add_class:"form-control" }}
+            <label for="id_go_reasons_other_text" class="form-label">Other reason</label>
+          </div>
+          {% if update_status_form.go_reasons_other_text.errors %}
+          <div class="text-danger">
+            {{ update_status_form.go_reasons_other_text.errors|striptags }}
+          </div>
+          {% endif %}
+        </div>
+
+        {{ update_status_form.nogo_reasons_other_id }}
+        <div class="mb-3" id="nogo_reasons_other_container" style="display:none;">
+          <div class="form-floating">
+            {{ update_status_form.nogo_reasons_other_text|add_class:"form-control" }}
+            <label for="id_nogo_reasons_other_text" class="form-label">Other reason</label>
+          </div>
+          {% if update_status_form.nogo_reasons_other_text.errors %}
+          <div class="text-danger">
+            {{ update_status_form.nogo_reasons_other_text.errors|striptags }}
+          </div>
+          {% endif %}
+        </div>
+
         <div class="mb-3" id="result_date_container" style="{% if update_status_form.data.status in result_date_status_ids_list %}display:block{% else %}display:none{% endif %}">
           <div class="form-floating">
             {{update_status_form.result_date|add_class:"form-control"}}
@@ -134,21 +184,94 @@
   </div>
 </form>
 <script>
+
+  $("#id_go_reasons, #id_nogo_reasons").select2({
+        theme: "bootstrap-5",
+        placeholder: "Choose Reasons",
+        allowClear: true,
+        width: "100%",
+        dropdownParent: $("#updateStatusForm")
+      }).on('change', function() {
+        toggleOtherReasonField();
+      });
+     toggleOtherReasonField();
+
+  function toggleOtherReasonField() {
+    
+    const goSelected = $("#id_go_reasons").select2('data') || [];
+    const goOtherItem = goSelected.find(item => item && String(item.text).trim().toLowerCase() === 'other');
+    const hasOtherGo = Boolean(goOtherItem);
+    const $goReasonContainer = $("#go_reasons_other_container");
+    const $inputGo = $("#id_go_reasons_other_text");
+    const $hiddenGo = $("#id_go_reasons_other_id");
+
+    if (hasOtherGo) {
+      $goReasonContainer.show();
+      $inputGo.prop('required', true);
+      $hiddenGo.val(goOtherItem.id);
+    } else {
+      $goReasonContainer.hide();
+      $inputGo.prop('required', false).val('');
+      $hiddenGo.val('');
+    }
+
+    const nogoSelected = $("#id_nogo_reasons").select2('data') || [];
+    const nogoOtherItem = nogoSelected.find(item => item && String(item.text).trim().toLowerCase() === 'other');
+    const hasOtherNoGo = Boolean(nogoOtherItem);
+    const $nogoReasonContainer = $("#nogo_reasons_other_container");
+    const $inputNogo = $("#id_nogo_reasons_other_text");
+    const $hiddenNogo = $("#id_nogo_reasons_other_id");
+
+    if (hasOtherNoGo) {
+      $nogoReasonContainer.show();
+      $inputNogo.prop('required', true);
+      $hiddenNogo.val(nogoOtherItem.id);
+    } else {
+      $nogoReasonContainer.hide();
+      $inputNogo.prop('required', false).val('');
+      $hiddenNogo.val('');
+    }
+  }
+
+  // Ensure the Other textbox is hidden initially, regardless of any form data
+  {% comment %} $("#go_reasons_other_container").hide();
+  $("#id_go_reasons_other_text").prop('required', false).val('');
+  $("#id_go_reasons_other_id").val(''); {% endcomment %}
+
   const transferToRfpId = {{ transfer_to_rfp_id|default:"null" }};
   const goStatusId = {{ go_status_id|default:"null" }};
+  const nogoStatusId = {{ nogo_status_id|default:"null" }};
   const wonStatusId = {{ won_status_id|default:"null" }};
   const resultDateStatusIds = {{ result_date_status_ids|safe }};
 
-  (function () {
+  function bindStatusHandlers(){
     $('input[name="status"]')
-      .on("change", function () {
-        const selectedStatus = $("input[name='status']:checked").val();
+    .off("change")
+    .on("change", function(){
+      const selectedStatus = $("input[name='status']:checked").val();
 
         if (goStatusId !== null && selectedStatus === String(goStatusId)) {
           $(".onlyForGo").show();
+          // Clear nogo reasons when switching to Go
+          $("#id_nogo_reasons").val(null).trigger('change');
         } else {
           $(".onlyForGo").hide();
+          // Clear go reasons when switching away from Go
+          $("#id_go_reasons").val(null).trigger('change');
         }
+
+        if (nogoStatusId !== null && selectedStatus === String(nogoStatusId)) {
+          $(".onlyForNoGo").show();
+          // Clear go reasons when switching to NoGo
+          $("#id_go_reasons").val(null).trigger('change');
+        } else {
+          $(".onlyForNoGo").hide();
+          // Clear nogo reasons when switching away from NoGo
+          $("#id_nogo_reasons").val(null).trigger('change');
+        }
+
+        // Reset and update the Other reason fields based on current status
+        toggleOtherReasonField();
 
         // Update button text based on selected status
         if (transferToRfpId !== null && selectedStatus === String(transferToRfpId)) {
@@ -177,10 +300,9 @@
         updateFormAction();
       })
       .change();
-
-    // Also set the form action immediately when modal loads
-    updateFormAction();
-  })();
+    }
+  
+    
   function updateFormAction() {
     const form = document.getElementById('updateStatusForm');
     const selectedStatus = $("input[name='status']:checked").val();
@@ -244,4 +366,24 @@
       htmx.trigger('#updateStatusForm', 'submit');
     }
   }
+
+  document.body.addEventListener('htmx:afterSettle', function(event) {
+    if (event.target.id === "dialog") {
+      $("#go_reasons_other_container").hide();
+      
+      const $el = $("#id_go_reasons");
+
+      $el.select2({
+        theme: "bootstrap-5",
+        placeholder: "Choose Reasons",
+        allowClear: true,
+        width: "100%",
+        dropdownParent: $("#updateStatusForm")
+      }).on('change', function() {
+        toggleOtherReasonField();
+      });
+      toggleOtherReasonField();
+      bindStatusHandlers();
+    }
+  });
 </script>

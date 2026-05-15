@@ -7,7 +7,7 @@ from unfold.contrib.import_export.forms import (ExportForm, ImportForm,
                                                 SelectableFieldsExportForm)
 
 from .models import (Client, Country, Currency, FundingAgency, Institute,
-                     Opportunity, Unit, GoReason, NoGoReason)
+                     Opportunity, Unit, GoReason, NoGoReason, OpportunityGoReason, OpportunityNoGoReason)
 
 from .resources import ClientResource, FundingAgencyResource, InstituteResource, UnitResource
 
@@ -82,12 +82,37 @@ class NotificationChannelAdmin(ModelAdmin):
     pass
 
 
+class OpportunityGoReasonAdmin(admin.StackedInline):
+    model = OpportunityGoReason
+    extra = 0
+    autocomplete_fields = ["reason"]
+
+
+class OpportunityNoGoReasonAdmin(admin.StackedInline):
+    model = OpportunityNoGoReason
+    extra = 0
+    autocomplete_fields = ["reason"]
+
+
 @admin.register(Opportunity)
 class OpportunityAdmin(ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = ExportForm
-    list_display = ['ref_no', 'title']
+    list_display = ['ref_no', 'title', 'status']
     search_fields = ['ref_no', 'title']
+
+    def get_inlines(self, request, obj):
+        # Creating new object
+        if not obj:
+            return []
+
+        if obj.status == 2:
+            return [OpportunityGoReasonAdmin]
+
+        if obj.status == 3:
+            return [OpportunityNoGoReasonAdmin]
+
+        return []
 
 
 @admin.register(GoReason)

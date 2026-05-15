@@ -21,7 +21,8 @@ from tracker.forms import (
     FundingAgencyChoiceField, ClientChoiceField
 )
 from tracker.models import (
-    FundingAgency, Client, Institute, Unit, Country, Currency, Opportunity
+    FundingAgency, Client, Institute, Unit, Country, Currency, Opportunity,
+    GoReason
 )
 
 User = get_user_model()
@@ -465,6 +466,35 @@ class UpdateStatusFormTest(TestCase):
         """Test that result_date is not required for status 4 (Consider)."""
         form_data = {
             'status': '4',  # Consider
+        }
+        form = UpdateStatusForm(data=form_data, instance=self.opportunity)
+        self.assertTrue(form.is_valid())
+
+    def test_status_form_other_requires_text_when_other_selected(self):
+        """Test that selecting Other requires the other reason text."""
+        other_reason = GoReason.objects.create(reason='Other')
+        form_data = {
+            'status': '2',
+            'proposal_lead': self.user.id,
+            'lead_unit': self.unit.id,
+            'go_reasons': [str(other_reason.id)],
+            'go_reasons_other_id': str(other_reason.id),
+            'go_reasons_other_text': '',
+        }
+        form = UpdateStatusForm(data=form_data, instance=self.opportunity)
+        self.assertFalse(form.is_valid())
+        self.assertIn('go_reasons_other_text', form.errors)
+
+    def test_status_form_other_accepts_text_when_other_selected(self):
+        """Test that selecting Other with text is valid."""
+        other_reason = GoReason.objects.create(reason='Other')
+        form_data = {
+            'status': '2',
+            'proposal_lead': self.user.id,
+            'lead_unit': self.unit.id,
+            'go_reasons': [str(other_reason.id)],
+            'go_reasons_other_id': str(other_reason.id),
+            'go_reasons_other_text': 'Custom reason details',
         }
         form = UpdateStatusForm(data=form_data, instance=self.opportunity)
         self.assertTrue(form.is_valid())

@@ -9,7 +9,7 @@ from django.core.files.base import File
 from django.db.models.base import Model
 from django.forms.utils import ErrorList
 from django.urls import reverse, reverse_lazy
-from .models import Client, Country, FundingAgency, Institute, Opportunity, FundingAgency, Client
+from .models import Client, Country, FundingAgency, GoReason, Institute, Opportunity, OpportunityGoReason, OpportunityNoGoReason
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 
@@ -201,11 +201,19 @@ class UpdateStatusForm(forms.ModelForm):
 
     status = forms.ChoiceField(
         widget=forms.RadioSelect, label="status", choices=(), required=True, error_messages={'required': 'Select at least one option'})
+    go_reasons_other_id = forms.UUIDField(
+        required=False, widget=forms.HiddenInput())
+    go_reasons_other_text = forms.CharField(required=False, label="Other reason",
+                                            widget=forms.TextInput(attrs={'placeholder': 'Specify other reason'}))
+    nogo_reasons_other_id = forms.UUIDField(
+        required=False, widget=forms.HiddenInput())
+    nogo_reasons_other_text = forms.CharField(required=False, label="Other reason",
+                                              widget=forms.TextInput(attrs={'placeholder': 'Specify other reason'}))
 
     class Meta:
         model = Opportunity
         fields = ['status', 'lead_unit', 'proposal_lead',
-                  'result_note', 'result_date', 'project_start_date', 'project_end_date']
+                  'result_note', 'result_date', 'project_start_date', 'project_end_date', 'go_reasons', 'nogo_reasons']
 
         widgets = {
             'result_note': forms.TextInput(attrs={'placeholder': 'Enter notes'})
@@ -230,6 +238,24 @@ class UpdateStatusForm(forms.ModelForm):
                 self.fields['result_date'].widget.attrs['min'] = submission_date.isoformat(
                 )
 
+            other_entry = OpportunityGoReason.objects.filter(
+                opportunity=self.instance,
+                reason__reason__iexact='other'
+            ).first()
+            if other_entry:
+                self.fields['go_reasons_other_text'].initial = other_entry.other_reason_description
+                self.fields['go_reasons_other_id'].initial = str(
+                    other_entry.reason_id)
+
+            nogo_other_entry = OpportunityNoGoReason.objects.filter(
+                opportunity=self.instance,
+                reason__reason__iexact='other'
+            ).first()
+            if nogo_other_entry:
+                self.fields['nogo_reasons_other_text'].initial = nogo_other_entry.other_reason_description
+                self.fields['nogo_reasons_other_id'].initial = str(
+                    nogo_other_entry.reason_id)
+
     def clean(self):
         cleaned_data = super().clean()
         status = int(cleaned_data.get("status", 0))
@@ -243,6 +269,45 @@ class UpdateStatusForm(forms.ModelForm):
                 else:
                     label = field_name.replace("_", " ").title()
                 self.add_error(field_name, f"{label} is required")
+
+        # Conditional validation for Go/No-Go
+        GO_STATUS = 2
+        NOGO_STATUS = 3
+
+        selected_go_reasons = cleaned_data.get('go_reasons') or []
+        selected_nogo_reasons = cleaned_data.get('nogo_reasons') or []
+
+        if status == GO_STATUS and not selected_go_reasons:
+            self.add_error('go_reasons', "Select at least one reason")
+
+        if status == NOGO_STATUS and not selected_nogo_reasons:
+            self.add_error('nogo_reasons', "Select at least one reason")
+
+        other_id = cleaned_data.get('go_reasons_other_id')
+        other_text = cleaned_data.get('go_reasons_other_text')
+
+        if other_id:
+            if not any(str(reason.id) == str(other_id) for reason in selected_go_reasons):
+                cleaned_data['go_reasons_other_id'] = None
+                cleaned_data['go_reasons_other_text'] = ''
+            elif not other_text:
+                self.add_error('go_reasons_other_text',
+                               'This field is required when Other is selected.')
+        else:
+            cleaned_data['go_reasons_other_text'] = ''
+
+        nogo_other_id = cleaned_data.get('nogo_reasons_other_id')
+        nogo_other_text = cleaned_data.get('nogo_reasons_other_text')
+
+        if nogo_other_id:
+            if not any(str(reason.id) == str(nogo_other_id) for reason in selected_nogo_reasons):
+                cleaned_data['nogo_reasons_other_id'] = None
+                cleaned_data['nogo_reasons_other_text'] = ''
+            elif not nogo_other_text:
+                self.add_error('nogo_reasons_other_text',
+                               'This field is required when Other is selected.')
+        else:
+            cleaned_data['nogo_reasons_other_text'] = ''
 
         return cleaned_data
 
