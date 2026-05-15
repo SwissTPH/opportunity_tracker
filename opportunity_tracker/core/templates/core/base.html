@@ -24,7 +24,7 @@
     href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
   />
 
-    <title>{% block title%}Opportunity Tracker {% endblock%}</title>
+    <title>{% block title%} {{APP_NAME}} {% endblock%}</title>
   </head>
   <body>
     <div class="container-fluid">
@@ -32,7 +32,7 @@
 
       <nav class="navbar fixed-top navbar-expand-lg" data-bs-theme="dark">
         <div class="container-fluid">
-          <a class="navbar-brand" href="{% url "home" %}">Opportunity Tracker</a>
+          <a class="navbar-brand" href="{% url "home" %}">{{ APP_NAME }}</a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>

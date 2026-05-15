@@ -9,9 +9,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Opportunity Tracker API",
+        title=f"{settings.APP_NAME} API",
         default_version='v1',
-        description="API documentation for Opportunity Tracker",
+        description=f"API documentation for {settings.APP_NAME}",
         terms_of_service="https://www.google.com/policies/terms/",
         contact=openapi.Contact(email="hirensoni913@gmail.com"),
         license=openapi.License(name="BSD License"),

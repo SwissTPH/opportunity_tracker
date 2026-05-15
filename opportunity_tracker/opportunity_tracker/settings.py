@@ -19,6 +19,7 @@ if ENVIRONMENT == "development":
 else:
     load_dotenv(BASE_DIR.parent / ".env.prod")
 
+APP_NAME = os.getenv("APP_NAME", "Opportunity Tracker")
 SITE_URL = os.environ.get("SITE_URL", "http://127.0.0.1:8000")
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -98,10 +99,15 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'settings_context_processor.context_processors.settings',
             ],
         },
     },
 ]
+
+TEMPLATE_VISIBLE_SETTINGS = (
+    "APP_NAME",
+)
 
 WSGI_APPLICATION = 'opportunity_tracker.wsgi.application'
 
