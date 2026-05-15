@@ -28,7 +28,7 @@ class CustomPasswordResetForm(PasswordResetForm):
         """
         Send an email to `to_email` using the notification module's EmailNotificationChannel.
         """
-        subject = "Password reset for Opportunity Tracker"
+        subject = f"Password reset for {settings.APP_NAME}"
 
         # Use the provided html_email_template_name if it exists
         if html_email_template_name:
