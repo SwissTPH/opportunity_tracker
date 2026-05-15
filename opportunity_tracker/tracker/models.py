@@ -135,6 +135,28 @@ class Currency(models.Model):
         return self.code
 
 
+class GoReason(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    reason = models.CharField(max_length=255, null=False, blank=False)
+
+    class Meta:
+        db_table = "go_reason"
+
+    def __str__(self):
+        return self.reason
+
+
+class NoGoReason(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    reason = models.CharField(max_length=255, null=False, blank=False)
+
+    class Meta:
+        db_table = "nogo_reason"
+
+    def __str__(self):
+        return self.reason
+
+
 class Opportunity(models.Model):
     OPP_TYPE = [("EOI", "EOI"), ("RFP", "RFP"),
                 ("FC", "Fore-cast"), ("NA", "Not Applicable")]
@@ -207,6 +229,10 @@ class Opportunity(models.Model):
         blank=True, null=True, default=False)
     project_start_date = models.DateField(blank=True, null=True)
     project_end_date = models.DateField(blank=True, null=True)
+    go_reasons = models.ManyToManyField(
+        GoReason, through="OpportunityGoReason", related_name="opportunity_go_reason", null=True, blank=True)
+    nogo_reasons = models.ManyToManyField(
+        NoGoReason, through="OpportunityNoGoReason", related_name="opportunity_nogo_reason", null=True, blank=True)
 
     class Meta:
         db_table = "opportunity"
@@ -265,3 +291,43 @@ class OpportunityFile(models.Model):
 
         # Now we will delete the record from the db
         super(OpportunityFile, self).delete(*args, **kwargs)
+
+
+class OpportunityGoReason(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    opportunity = models.ForeignKey(Opportunity, on_delete=models.CASCADE)
+    reason = models.ForeignKey(GoReason, on_delete=models.CASCADE)
+    other_reason_description = models.CharField(
+        max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.reason.reason
+
+    class Meta:
+        db_table = "opportunity_go_reason"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["opportunity", "reason"],
+                name="unique_opportunity_go_reason"
+            )
+        ]
+
+
+class OpportunityNoGoReason(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    opportunity = models.ForeignKey(Opportunity, on_delete=models.CASCADE)
+    reason = models.ForeignKey(NoGoReason, on_delete=models.CASCADE)
+    other_reason_description = models.CharField(
+        max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.reason.reason
+
+    class Meta:
+        db_table = "opportunity_nogo_reason"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["opportunity", "reason"],
+                name="unique_opportunity_nogo_reason"
+            )
+        ]

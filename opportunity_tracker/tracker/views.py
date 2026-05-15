@@ -26,7 +26,7 @@ from notification.models import OpportunitySubscription
 from .forms import (OpportunityDetailForm, OpportunityDetailAnonymousForm, OpportunityForm,
                     OpportunitySearchForm, SubmitProposalForm,
                     UpdateOpportunityForm, UpdateStatusForm, FundingAgencyForm, ClientForm)
-from .models import Opportunity, OpportunityFile
+from .models import Opportunity, OpportunityFile, OpportunityGoReason, OpportunityNoGoReason
 
 from .serializers import OpportunitySerializer
 from .workflows.registry import get_active_workflow
@@ -322,6 +322,42 @@ class OpportunityStatusUpdateView(UpdateView):
             return f"{base_url}?{query_params.urlencode()}"
         return base_url
 
+    def _save_go_reasons(self, opportunity, selected_reasons, other_reason_id, other_reason_text):
+        OpportunityGoReason.objects.filter(opportunity=opportunity).delete()
+        if not selected_reasons:
+            return
+
+        for reason in selected_reasons:
+            if other_reason_id and str(reason.id) == str(other_reason_id):
+                OpportunityGoReason.objects.create(
+                    opportunity=opportunity,
+                    reason=reason,
+                    other_reason_description=other_reason_text
+                )
+            else:
+                OpportunityGoReason.objects.create(
+                    opportunity=opportunity,
+                    reason=reason
+                )
+
+    def _save_nogo_reasons(self, opportunity, selected_reasons, other_reason_id, other_reason_text):
+        OpportunityNoGoReason.objects.filter(opportunity=opportunity).delete()
+        if not selected_reasons:
+            return
+
+        for reason in selected_reasons:
+            if other_reason_id and str(reason.id) == str(other_reason_id):
+                OpportunityNoGoReason.objects.create(
+                    opportunity=opportunity,
+                    reason=reason,
+                    other_reason_description=other_reason_text
+                )
+            else:
+                OpportunityNoGoReason.objects.create(
+                    opportunity=opportunity,
+                    reason=reason
+                )
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
 
@@ -372,6 +408,32 @@ class OpportunityStatusUpdateView(UpdateView):
 
             # Save the combined data
             main_obj = main_form.save()
+
+            status = main_form.instance.status
+
+            if status == 2:
+                # Save go_reasons through model data, including other_reason_description.
+                self._save_go_reasons(
+                    main_obj,
+                    status_form.cleaned_data.get('go_reasons'),
+                    status_form.cleaned_data.get('go_reasons_other_id'),
+                    status_form.cleaned_data.get('go_reasons_other_text')
+                )
+
+                # Clear any No-go reasons
+                self._save_nogo_reasons(main_obj, None, None, None)
+
+            elif status == 3:
+                # Save nogo_reasons through model data, including other_reason_description.
+                self._save_nogo_reasons(
+                    main_obj,
+                    status_form.cleaned_data.get('nogo_reasons'),
+                    status_form.cleaned_data.get('nogo_reasons_other_id'),
+                    status_form.cleaned_data.get('nogo_reasons_other_text')
+                )
+
+                # Clear any existing go reasons
+                self._save_go_reasons(main_obj, None, None, None)
 
             # Handle file uploads from the main form
             files = self.request.FILES.getlist("files")
@@ -435,6 +497,7 @@ class OpportunityStatusUpdateView(UpdateView):
         slug_to_id = get_status_slug_to_id(wf)
         context['transfer_to_rfp_id'] = slug_to_id.get('transfer_to_rfp')
         context['go_status_id'] = slug_to_id.get('go')
+        context['nogo_status_id'] = slug_to_id.get('no_go')
         context['won_status_id'] = slug_to_id.get('won')
         result_date_ids_list = [
             str(slug_to_id[s])
@@ -545,6 +608,15 @@ class OpportunityDetailView(DetailView):
 
         context['files'] = opportunity.Files.all()
 
+        # Get the decision reason go/no-go
+        if opportunity.status == 2:
+            context['reasons'] = opportunity.opportunitygoreason_set.select_related(
+                'reason')
+
+        elif opportunity.status == 3:
+            context['reasons'] = opportunity.opportunitynogoreason_set.select_related(
+                'reason')
+
         return context
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
@@ -576,6 +648,15 @@ class OpportunityDetailAnonymousView(DeleteView):
             partner.name for partner in opportunity.partners.all()]
 
         context['files'] = opportunity.Files.all()
+
+        # Get the decision reason go/no-go
+        if opportunity.status == 2:
+            context['reasons'] = opportunity.opportunitygoreason_set.select_related(
+                'reason')
+
+        elif opportunity.status == 3:
+            context['reasons'] = opportunity.opportunitynogoreason_set.select_related(
+                'reason')
 
         return context
 

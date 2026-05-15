@@ -37,7 +37,9 @@ body {
 }
 
 .opp-list-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .opp-list-card:hover {
@@ -96,7 +98,9 @@ body {
   align-items: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow */
   z-index: 1050; /* Ensure it's on top */
-  transition: background-color 0.3s, transform 0.3s;
+  transition:
+    background-color 0.3s,
+    transform 0.3s;
 }
 
 .fab:hover {
@@ -171,4 +175,11 @@ body {
   text-align: center;
   font-size: 1.5rem;
   font-weight: bold;
+}
+
+.select2-container .select2-selection--multiple .select2-selection__choice {
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+  word-wrap: break-word;
 }

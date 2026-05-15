@@ -20,7 +20,7 @@ from django.urls import reverse
 
 from tracker.models import (
     FundingAgency, Client, Institute, Unit, Country, Currency,
-    Opportunity, OpportunityFile
+    Opportunity, OpportunityFile, GoReason, OpportunityGoReason
 )
 from notification.models import OpportunitySubscription
 
@@ -380,6 +380,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
             status=1
         )
         self.opportunity.countries.add(self.country)
+        self.go_reason_clarified = GoReason.objects.create(reason='Clarified')
 
     def test_status_update_to_go(self):
         """Test updating status to Go with required fields."""
@@ -392,6 +393,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
             'countries': [self.country.code],  # Use country code (primary key)
+            'go_reasons': [str(self.go_reason_clarified.id)]
         }
         response = self.client.post(
             reverse('udpate_status', kwargs={'pk': self.opportunity.pk}),
@@ -402,6 +404,36 @@ class OpportunityStatusUpdateViewTest(TestCase):
         self.assertEqual(self.opportunity.status, 2)
         self.assertEqual(self.opportunity.proposal_lead, self.user)
         self.assertEqual(self.opportunity.lead_unit, self.unit)
+
+    def test_status_update_other_reason_persists_through_model(self):
+        """Test that Other reason text is stored in the through model."""
+        self.client.login(username='testuser', password='testpass123')
+        other_reason = GoReason.objects.create(reason='Other')
+
+        form_data = {
+            'ref_no': 'OPP-2024-STATUS',
+            'title': 'Status Test',
+            'opp_type': 'RFP',
+            'status': '2',  # Go
+            'proposal_lead': self.user.id,
+            'lead_unit': self.unit.id,
+            'countries': [self.country.code],
+            'go_reasons': [str(other_reason.id)],
+            'go_reasons_other_id': str(other_reason.id),
+            'go_reasons_other_text': 'Custom other reason',
+        }
+        response = self.client.post(
+            reverse('udpate_status', kwargs={'pk': self.opportunity.pk}),
+            data=form_data
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.opportunity.refresh_from_db()
+        self.assertEqual(self.opportunity.status, 2)
+        relation = OpportunityGoReason.objects.get(
+            opportunity=self.opportunity, reason=other_reason)
+        self.assertEqual(relation.other_reason_description,
+                         'Custom other reason')
 
     def test_status_update_context_filtered_status(self):
         """Test that context contains filtered status choices based on current status."""
@@ -593,6 +625,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
             'countries': [self.country.code],
+            'go_reasons': [str(self.go_reason_clarified.id)]
             # No result_date
         }
         response = self.client.post(
@@ -625,7 +658,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
         form = response.context['update_status_form']
         # Must have exactly these two errors and nothing else
         self.assertEqual(set(form.errors.keys()), {
-                         'lead_unit', 'proposal_lead'})
+                         'lead_unit', 'proposal_lead', 'go_reasons'})
 
     def test_status_form_data_preserved_on_rerender(self):
         """

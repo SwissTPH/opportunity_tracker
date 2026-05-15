@@ -66,6 +66,21 @@
       {% endfor %}
     </span>
   </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Decision Reasons:</span>
+    <span class="detail-value">
+      <!--prettier-ignore-->
+      {% for reason in reasons %} 
+        {{reason.reason}}
+        {% if reason.reason.reason.lower == 'other' and reason.other_reason_description %}
+        ({{reason.other_reason_description}})
+        {% endif %} 
+        {% if not forloop.last %}, {% endif %}
+      {% endfor %}
+    </span>
+  </div>
+
 </div>
 
 <!-- Timeline -->
