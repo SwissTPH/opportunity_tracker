@@ -380,6 +380,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
             status=1
         )
         self.opportunity.countries.add(self.country)
+        self.go_reason_clarified = GoReason.objects.create(reason='Clarified')
 
     def test_status_update_to_go(self):
         """Test updating status to Go with required fields."""
@@ -392,6 +393,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
             'countries': [self.country.code],  # Use country code (primary key)
+            'go_reasons': [str(self.go_reason_clarified.id)]
         }
         response = self.client.post(
             reverse('udpate_status', kwargs={'pk': self.opportunity.pk}),
@@ -623,6 +625,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
             'countries': [self.country.code],
+            'go_reasons': [str(self.go_reason_clarified.id)]
             # No result_date
         }
         response = self.client.post(
@@ -655,7 +658,7 @@ class OpportunityStatusUpdateViewTest(TestCase):
         form = response.context['update_status_form']
         # Must have exactly these two errors and nothing else
         self.assertEqual(set(form.errors.keys()), {
-                         'lead_unit', 'proposal_lead'})
+                         'lead_unit', 'proposal_lead', 'go_reasons'})
 
     def test_status_form_data_preserved_on_rerender(self):
         """

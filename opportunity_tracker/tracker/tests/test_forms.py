@@ -21,7 +21,7 @@ from tracker.forms import (
     FundingAgencyChoiceField, ClientChoiceField
 )
 from tracker.models import (
-    FundingAgency, Client, Institute, Unit, Country, Currency, Opportunity,
+    FundingAgency, Client, Institute, NoGoReason, Unit, Country, Currency, Opportunity,
     GoReason
 )
 
@@ -335,6 +335,12 @@ class UpdateStatusFormTest(TestCase):
             created_by=self.user,
             status=1
         )
+        # Shared reasons used across multiple tests
+        self.go_reason_clarified = GoReason.objects.create(reason='Clarified')
+        self.go_reason_other = GoReason.objects.create(reason='Other')
+        self.nogo_reason_clarified = NoGoReason.objects.create(
+            reason='Clarification')
+        self.nogo_reason_other = NoGoReason.objects.create(reason='Other')
 
     def test_status_form_go_requires_proposal_lead_and_unit(self):
         """Test that Go status requires proposal_lead and lead_unit."""
@@ -352,6 +358,7 @@ class UpdateStatusFormTest(TestCase):
             'status': '2',
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
+            'go_reasons': [str(self.go_reason_clarified.id)],
         }
         form = UpdateStatusForm(data=form_data, instance=self.opportunity)
         self.assertTrue(form.is_valid())
@@ -450,6 +457,7 @@ class UpdateStatusFormTest(TestCase):
             'status': '2',  # Go
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
+            'go_reasons': [str(self.go_reason_clarified.id)]
         }
         form = UpdateStatusForm(data=form_data, instance=self.opportunity)
         self.assertTrue(form.is_valid())
@@ -458,6 +466,7 @@ class UpdateStatusFormTest(TestCase):
         """Test that result_date is not required for status 3 (NO-Go)."""
         form_data = {
             'status': '3',  # NO-Go
+            'nogo_reasons': [str(self.nogo_reason_clarified.id)]
         }
         form = UpdateStatusForm(data=form_data, instance=self.opportunity)
         self.assertTrue(form.is_valid())
@@ -472,13 +481,12 @@ class UpdateStatusFormTest(TestCase):
 
     def test_status_form_other_requires_text_when_other_selected(self):
         """Test that selecting Other requires the other reason text."""
-        other_reason = GoReason.objects.create(reason='Other')
         form_data = {
             'status': '2',
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
-            'go_reasons': [str(other_reason.id)],
-            'go_reasons_other_id': str(other_reason.id),
+            'go_reasons': [str(self.go_reason_other.id)],
+            'go_reasons_other_id': str(self.go_reason_other.id),
             'go_reasons_other_text': '',
         }
         form = UpdateStatusForm(data=form_data, instance=self.opportunity)
@@ -487,13 +495,12 @@ class UpdateStatusFormTest(TestCase):
 
     def test_status_form_other_accepts_text_when_other_selected(self):
         """Test that selecting Other with text is valid."""
-        other_reason = GoReason.objects.create(reason='Other')
         form_data = {
             'status': '2',
             'proposal_lead': self.user.id,
             'lead_unit': self.unit.id,
-            'go_reasons': [str(other_reason.id)],
-            'go_reasons_other_id': str(other_reason.id),
+            'go_reasons': [str(self.go_reason_other.id)],
+            'go_reasons_other_id': str(self.go_reason_other.id),
             'go_reasons_other_text': 'Custom reason details',
         }
         form = UpdateStatusForm(data=form_data, instance=self.opportunity)
