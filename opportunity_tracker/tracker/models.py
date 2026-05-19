@@ -424,3 +424,40 @@ class OpportunityBudget(models.Model):
 
     def __str__(self):
         return f"{self.Opportunity.ref_no} - {self.template.name}"
+
+
+class OpportunityBudgetValue(models.Model):
+    budget = models.ForeignKey(
+        OpportunityBudget,
+        on_delete=models.CASCADE,
+        related_name="values"
+    )
+
+    row = models.ForeignKey(
+        BudgetTemplateRow,
+        on_delete=models.PROTECT,
+        related_name="budget_values"
+    )
+
+    column = models.ForeignKey(
+        BudgetTemplateColumn,
+        on_delete=models.PROTECT,
+        related_name="budget_values"
+    )
+
+    value = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    class Meta:
+        db_table = "budget_value"
+        unique_together = ("budget", "row", "column")
+
+    def __str__(self):
+        return (
+            f"{self.budget.opportunity.ref_no} | "
+            f"{self.row.label} | "
+            f"{self.column.label}"
+        )
