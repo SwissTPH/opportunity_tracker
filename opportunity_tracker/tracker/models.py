@@ -331,3 +331,71 @@ class OpportunityNoGoReason(models.Model):
                 name="unique_opportunity_nogo_reason"
             )
         ]
+
+
+# Budgeting
+class BudgetTemplate(models.Model):
+    name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "budget_template"
+        verbose_name = "Budget Template"
+        verbose_name_plural = "Budget Templates"
+
+    def __str__(self):
+        return self.name
+
+
+class BudgetTemplateColumn(models.Model):
+    template = models.ForeignKey(
+        BudgetTemplate,
+        on_delete=models.CASCADE,
+        related_name="columns"
+    )
+    key = models.CharField(max_length=100)
+    label = models.CharField(max_length=255)
+    display_order = models.PositiveBigIntegerField(default=1)
+
+    class Meta:
+        db_table = "budget_template_column"
+        verbose_name = "Budget Template Column"
+        verbose_name_plural = "Budget Templates Columns"
+        ordering = ["display_order"]
+        unique_together = ("template", "key")
+
+    def __str__(self):
+        return self.label
+
+
+class BudgetTemplateRow(models.Model):
+    ROW_TYPES = [
+        ("input", "Input"),
+        ("total", "Total"),
+    ]
+
+    template = models.ForeignKey(
+        BudgetTemplate,
+        on_delete=models.CASCADE,
+        related_name="rows"
+    )
+
+    key = models.CharField(max_length=100)
+    label = models.CharField(max_length=255)
+    row_type = models.CharField(
+        max_length=20,
+        choices=ROW_TYPES,
+        default="input"
+    )
+    display_order = models.PositiveBigIntegerField(default=1)
+
+    class Meta:
+        db_table = "budget_template_row"
+        verbose_name = "Budget Template Row"
+        verbose_name_plural = "Budget Template Rows"
+        ordering = ["display_order"]
+        unique_together = ("template", "key")
+
+    def __str__(self):
+        return self.label
