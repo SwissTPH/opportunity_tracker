@@ -101,7 +101,8 @@ class UpdateOpportunityForm(forms.ModelForm):
         model = Opportunity
         fields = ['ref_no', 'title', 'funding_agency', 'client', 'opp_type', 'countries',
                   'due_date', 'clarification_date', 'intent_bid_date', 'duration_months', 'notes', 'status', 'currency', 'proposal_amount',
-                  'lead_unit', 'proposal_lead', 'submission_date', 'lead_institute', 'partners', 'submission_validity', 'result_note', 'is_noncompetitive']
+                  'lead_unit', 'proposal_lead', 'submission_date', 'lead_institute', 'partners', 'submission_validity', 'result_note', 'is_noncompetitive',
+                  'project_start_date', 'project_end_date']
         # Note: result_date is intentionally excluded - it's only managed via UpdateStatusForm
 
         widgets = {
@@ -110,6 +111,8 @@ class UpdateOpportunityForm(forms.ModelForm):
             'clarification_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'intent_bid_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'submission_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'project_start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'project_end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'files': forms.ClearableFileInput(),
             'is_noncompetitive': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
             'duration_months': forms.TextInput(attrs={'placeholder': 'Enter duration in months'}),

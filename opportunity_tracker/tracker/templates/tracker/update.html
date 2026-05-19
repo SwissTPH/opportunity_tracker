@@ -174,7 +174,7 @@
           </div>
         {% endif %}
 
-        {% if current_status_group == "execution" or current_status_group == "outcome" or current_status_group == "post_win" %}
+        {% if current_status_group == "execution" or current_status_group == "outcome" or current_status_group == "post_result" %}
           <div class="row g-2">
           <div class="form-floating col-md-4">
             <div class="input-group">
@@ -213,6 +213,24 @@
           </div>
           
           
+        {% endif %}
+
+        {% if current_status_slug == "won" or current_status_group == "post_result" %}
+          <div class="form-floating col-md-4">
+            {{form.project_start_date|add_class:"form-control"}}
+            <label for="project_start_date" class="form-label">Project Start Date</label>
+            {%if form.project_start_date.errors%}
+            <div class="text-danger">{{form.project_start_date.errors|striptags}}</div>
+            {%endif%}
+          </div>
+          
+          <div class="form-floating col-md-4">
+            {{form.project_end_date|add_class:"form-control"}}
+            <label for="project_end_date" class="form-label">Project End Date</label>
+            {%if form.project_end_date.errors%}
+            <div class="text-danger">{{form.project_end_date.errors|striptags}}</div>
+            {%endif%}
+          </div>
         {% endif %}
 
         <div class="form-floating col-12">
