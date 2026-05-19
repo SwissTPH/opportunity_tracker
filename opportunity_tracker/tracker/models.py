@@ -399,3 +399,28 @@ class BudgetTemplateRow(models.Model):
 
     def __str__(self):
         return self.label
+
+
+class OpportunityBudget(models.Model):
+    Opportunity = models.OneToOneField(
+        Opportunity,
+        on_delete=models.CASCADE,
+        related_name="budget"
+    )
+
+    template = models.ForeignKey(
+        BudgetTemplate,
+        on_delete=models.PROTECT,
+        related_name="opportunity_budget"
+    )
+
+    ex_rate_to_default_cur = models.DecimalField(
+        max_digits=12,
+        decimal_places=6
+    )
+
+    class Meta:
+        db_table = "opportunity_budget"
+
+    def __str__(self):
+        return f"{self.Opportunity.ref_no} - {self.template.name}"
