@@ -356,6 +356,7 @@ class BudgetTemplateColumn(models.Model):
     )
     key = models.CharField(max_length=100)
     label = models.CharField(max_length=255)
+    is_readonly = models.BooleanField(default=False)
     display_order = models.PositiveBigIntegerField(default=1)
 
     class Meta:
