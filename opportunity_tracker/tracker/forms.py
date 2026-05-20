@@ -416,3 +416,8 @@ class ClientForm(forms.ModelForm):
             'code': forms.TextInput(attrs={'placeholder': 'Enter code'}),
             'name': forms.TextInput(attrs={'placeholder': 'Enter name'})
         }
+
+
+class OpportunityBudgetForm(forms.Form):
+    exchange_rate = forms.DecimalField(max_digits=12, decimal_places=6, widget=forms.NumberInput(
+        attrs={'placeholder': 'Enter exchange rate', 'step': '0.1'}))

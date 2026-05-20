@@ -21,7 +21,59 @@
   <div class="modal-body">
     <div class="card">
       <div class="card-body">
-        
+        <div class="row g-3">
+          <div class="form-floating  mb-3">
+            {{form.exchange_rate|add_class:"form-control"}}
+            <label for="exchange_rate">Exchange Rate</label>
+          </div>
+          {%if form.exchange_rate.errors%}
+          <div class="text-danger">{{form.exchange_rate.errors|striptags}}</div>
+          {%endif%}
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <tr>
+            <thead class="table-light">
+              <th style="width: 40%;"></th>
+                {% for column in columns %}
+                  <th>{{column.label}}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr class="{% if row.row_type == 'total' %}table-secondary fw-bold{% endif %}">
+                <td>{{row.label}}</td>
+                {% for column in columns %}
+                  <td>
+                    <input
+                      type="number"
+                      step="0.01"
+                      class="form-control text-end {% if column.is_readonly or row.row_type == 'total' %}bg-light{% endif %}"
+                      {% if column.is_readonly or row.row_type == 'total' %}readonly{% endif %}
+
+                      data-row="{{ row.key }}"
+                      data-column="{{ column.key }}"
+                      data-row-type="{{ row.row_type }}"
+
+                      {% if not column.is_readonly %}
+                        data-role="source"
+                      {% else %}
+                        data-role="converted"
+                      {% endif %}
+
+                      name="budget_{{ row.key }}_{{ column.key }}"
+                    >
+                  </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+
       </div>
     </div>
   </div>
@@ -41,3 +93,107 @@
     </button>
   </div>
 </form>
+
+<script>
+  function recalculateRow(rowKey) {
+
+    const exchangeRate = parseFloat(
+      $("#id_exchange_rate").val()
+    );
+
+    if (!exchangeRate || exchangeRate <= 0) {
+      return;
+    }
+
+    const sourceInput = $(
+      `input[data-row="${rowKey}"][data-role="source"]`
+    );
+
+    const convertedInput = $(
+      `input[data-row="${rowKey}"][data-role="converted"]`
+    );
+
+    const sourceValue = parseFloat(
+      sourceInput.val()
+    ) || 0;
+
+    const convertedValue = (
+      sourceValue / exchangeRate
+    ).toFixed(2);
+
+    convertedInput.val(convertedValue);
+  }
+
+function recalculateTotals() {
+
+  let sourceTotal = 0;
+  let convertedTotal = 0;
+
+  $("input[data-role='source']")
+    .each(function () {
+
+      const rowType = $(this).data("row-type");
+
+      if (rowType === "total") {
+        return;
+      }
+
+      sourceTotal += parseFloat(
+        $(this).val()
+      ) || 0;
+    });
+
+
+  $("input[data-role='converted']")
+    .each(function () {
+
+      const rowType = $(this).data("row-type");
+
+      if (rowType === "total") {
+        return;
+      }
+
+      convertedTotal += parseFloat(
+        $(this).val()
+      ) || 0;
+    });
+
+
+  $("input[data-row-type='total'][data-role='source']")
+    .val(sourceTotal.toFixed(2));
+
+
+  $("input[data-row-type='total'][data-role='converted']")
+    .val(convertedTotal.toFixed(2));
+}
+
+
+
+  $(document).ready(function () {
+
+    $("input[data-role='source']")
+      .on("input", function () {
+
+        const rowKey = $(this).data("row");
+
+        recalculateRow(rowKey);
+        recalculateTotals();
+      });
+
+
+    $("#id_exchange_rate")
+      .on("input", function () {
+
+        $("input[data-role='source']")
+          .each(function () {
+
+            const rowKey = $(this).data("row");
+
+            recalculateRow(rowKey);
+          });
+          recalculateTotals();
+      });
+
+  });
+
+</script>

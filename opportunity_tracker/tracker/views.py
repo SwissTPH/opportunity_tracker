@@ -23,7 +23,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from notification.models import OpportunitySubscription
 
-from .forms import (OpportunityDetailForm, OpportunityDetailAnonymousForm, OpportunityForm,
+from .forms import (OpportunityBudgetForm, OpportunityDetailForm, OpportunityDetailAnonymousForm, OpportunityForm,
                     OpportunitySearchForm, SubmitProposalForm,
                     UpdateOpportunityForm, UpdateStatusForm, FundingAgencyForm, ClientForm)
 from .models import BudgetTemplate, Opportunity, OpportunityFile, OpportunityGoReason, OpportunityNoGoReason
@@ -796,12 +796,13 @@ class TransferOpportunityView(View):
 # Financial Contribution
 class OpportunityBudgetView(View):
     model = BudgetTemplate
-    # form_class = OpportunityBudgetForm
+    form_class = OpportunityBudgetForm
     template_name = "tracker/partials/fin_contribution_modal.html"
 
     def get(self, request, *args, **kwargs):
         template = BudgetTemplate.objects.get(is_active=True)
         context = {
+            'form': OpportunityBudgetForm(),
             'template': template,
             'columns': template.columns.all(),
             'rows': template.rows.all(),
