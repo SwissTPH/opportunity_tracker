@@ -372,6 +372,7 @@ class BudgetTemplateColumn(models.Model):
 class BudgetTemplateRow(models.Model):
     ROW_TYPES = [
         ("input", "Input"),
+        ("display", "Display"),
         ("total", "Total"),
     ]
 
