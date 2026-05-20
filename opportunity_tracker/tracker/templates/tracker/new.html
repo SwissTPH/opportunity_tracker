@@ -15,17 +15,15 @@
     {% endif %}
   </div>
   <div class="card-body">
-  <div class="card-body">
     <form
-    class="row g-3"
-    id="opportunityForm"    enctype="multipart/form-data"
-    method="POST"
-    action ="{% url 'new_opportunity' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
-    hx-get={% url "new_opportunity" %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}
-    hx-trigger="new_entity_created from:body"
-    hx-target="#opportunityForm"
-    hx-swap="outerHTML"
-  >    
+      class="row g-3"
+      id="opportunityForm"    enctype="multipart/form-data"
+      method="POST"
+      action ="{% url 'new_opportunity' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+      hx-get={% url "new_opportunity" %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}
+      hx-trigger="new_entity_created from:body"
+      hx-target="#opportunityForm"
+      >    
       {% csrf_token %}
       {% if request.GET.source_id %}
         <input type="hidden" name="source_id" value="{{ request.GET.source_id }}">
@@ -53,6 +51,7 @@
         <div class="text-danger">{{ form.ref_no.errors|striptags }}</div>
         {% endif%}
       </div>
+
       <div class="form-floating col-md-9">
         {{form.title|add_class:"form-control"}}
         <label for="title" class="form-label">Title *</label>
@@ -92,46 +91,54 @@
       </div>
 
       <div class="col-md-4">
-      <div class="input-group">
-        <div class="input-group-text">Countries</div>
-        {{form.countries|add_class:"form-select"}}
-      </div>
-      {%if form.countries.errors%}
-      <div class="text-danger">{{form.countries.errors|striptags}}</div>
-      {%endif%}
-    </div>
-
-    <div class="form-floating col-md-2">
-      {{form.duration_months|add_class:"form-control"}}
-      <label for="duration_months" class="form-label">Duration (months)</label>
-      {%if form.duration_months.errors%}
-      <div class="text-danger">{{form.duration_months.errors|striptags}}</div>
-      {%endif%}
-    </div>
-
-    <div class="col-md-6">
-      <div class="input-group">
-        <div class="input-group-text p-0 border-0 bg-transparent">
-          <div class="form-floating">
-          {{form.currency|add_class:"form-select"}}
-          <label for="duration_months" class="form-label">Currency</label>
-          </div>
-          {%if form.currency.errors%}
-            <div class="text-danger">{{form.currency.errors|striptags}}</div>
+        <div class="input-group">
+          <div class="input-group-text">Countries</div>
+          {{form.countries|add_class:"form-select"}}
+          {%if form.countries.errors%}
+          <div class="text-danger">{{form.countries.errors|striptags}}</div>
           {%endif%}
         </div>
-        
-        {{form.proposal_amount|add_class:"form-control"}}
-        <div class="input-group-append">
-          <button class="btn btn-outline-info" type="button" id="btn-configure-budget" style="height:100%">Budget</button>
-        </div>
-
-        {%if form.proposal_amount.errors%}
-        <div class="text-danger">{{form.proposal_amount.errors|striptags}}</div>
-        {%endif%}
-
       </div>
-    </div>
+      
+      <div class="form-floating col-md-2">
+        {{form.duration_months|add_class:"form-control"}}
+        <label for="duration_months" class="form-label">Duration (months)</label>
+        {%if form.duration_months.errors%}
+        <div class="text-danger">{{form.duration_months.errors|striptags}}</div>
+        {%endif%}
+      </div>
+
+      <div class="col-md-6">
+        <div class="input-group">
+          <div class="input-group-text p-0 border-0 bg-transparent">
+            <div class="form-floating">
+              {{form.currency|add_class:"form-select"}}
+              <label for="duration_months" class="form-label">Currency</label>
+            </div>
+            {%if form.currency.errors%}
+              <div class="text-danger">{{form.currency.errors|striptags}}</div>
+            {%endif%}
+          </div>
+          
+          {{form.proposal_amount|add_class:"form-control"}}
+          
+          <div class="input-group-append">
+            <button disabled class="btn btn-outline-info" type="button" id="btn-configure-budget" style="height:100%"
+              data-bs-toggle="modal"
+              data-bs-target="#modal"
+              data-modal-size="modal-md"
+              hx-get="{% url "opportunity_budget" %}"
+              hx-target="#dialog"
+              hx-trigger="click"
+            >Budget</button>
+          </div>
+
+          {%if form.proposal_amount.errors%}
+          <div class="text-danger">{{form.proposal_amount.errors|striptags}}</div>
+          {%endif%}
+
+        </div>
+      </div>
       
       <div class="form-floating col-md-4">
         {{form.due_date|add_class:"form-control"}}
@@ -165,26 +172,20 @@
         {%endif%}
       </div>
 
-    <div class="col-md-6">
+      <div class="col-md-6">
         <input class="form-control" type="file" name="files" id="files" multiple>
       </div>
       
-    </div>
-  </div>
       <div class="card-footer">
         <button
           type="submit"
           class="btn btn-lg btn-success float-end"
-        ><i class="fa-solid fa-save"></i>
-        Save
+          ><i class="fa-solid fa-save"></i>
+          Save
         </button>
       </div>
-    </div>
-    
-  </div>
-  </div>
-
-  </form>
+      
+    </form>
 </div>
 
 {% endblock content %} 
@@ -270,9 +271,7 @@
           $(this).val(null).trigger("change");
         }
     
-  
- 
-
+    
   });
 
   if (!window.htmxListenerAttached) {
@@ -303,6 +302,23 @@
     });
     window.htmxListenerAttached = true; // Prevent duplicate event listeners
   }
+
+
+
+  function toggleBudgetButton(){
+      if($("#id_currency").val()){
+        $("#btn-configure-budget").prop('disabled', false);
+      }else{
+        $("#btn-configure-budget").prop('disabled', true);
+      }
+    }
+
+    $("#id_currency").on("change", function() {
+      toggleBudgetButton();
+    });
+  
+  toggleBudgetButton();
+
 });
 
 // Remove existing event listener before adding a new one (to prevent duplication)
