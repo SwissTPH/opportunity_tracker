@@ -26,7 +26,7 @@ from notification.models import OpportunitySubscription
 from .forms import (OpportunityBudgetForm, OpportunityDetailForm, OpportunityDetailAnonymousForm, OpportunityForm,
                     OpportunitySearchForm, SubmitProposalForm,
                     UpdateOpportunityForm, UpdateStatusForm, FundingAgencyForm, ClientForm)
-from .models import BudgetTemplate, Opportunity, OpportunityFile, OpportunityGoReason, OpportunityNoGoReason
+from .models import BudgetTemplate, Currency, Opportunity, OpportunityFile, OpportunityGoReason, OpportunityNoGoReason
 
 from .serializers import OpportunitySerializer
 from .workflows.registry import get_active_workflow
@@ -801,11 +801,17 @@ class OpportunityBudgetView(View):
 
     def get(self, request, *args, **kwargs):
         template = BudgetTemplate.objects.get(is_active=True)
+        currency_id = request.GET.get('currency')
+        currency = Currency.objects.filter(pk=currency_id).first()
+
+        print(currency_id)
+
         context = {
             'form': OpportunityBudgetForm(),
             'template': template,
             'columns': template.columns.all(),
             'rows': template.rows.all(),
+            'currency': currency
         }
 
         return render(request, self.template_name, context)
