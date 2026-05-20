@@ -1,0 +1,43 @@
+{% load static %} {% load form_tags %}
+
+<form
+  id="opportunityBudgetForm"
+  class="modal-content"
+  hx-target="#dialog"
+  novalidate
+>
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title" id="finContributionLabel">
+      Financial Contribution
+    </h5>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="modal"
+      aria-label="Close"
+    ></button>
+  </div>
+  <div class="modal-body">
+    <div class="card">
+      <div class="card-body">
+        
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+      Cancel
+    </button>
+    <button
+      type="button"
+      class="btn btn-success"
+      id="saveFinContributionButton"
+      onclick="submitForm()"
+    >
+      Save <img id="spinnerUpdate"
+      src="{% static "images/bouncing-circles.svg" %}" alt=""
+      style="height:25px;" class="htmx-indicator" />
+    </button>
+  </div>
+</form>

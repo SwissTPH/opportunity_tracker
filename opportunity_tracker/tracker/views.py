@@ -26,7 +26,7 @@ from notification.models import OpportunitySubscription
 from .forms import (OpportunityDetailForm, OpportunityDetailAnonymousForm, OpportunityForm,
                     OpportunitySearchForm, SubmitProposalForm,
                     UpdateOpportunityForm, UpdateStatusForm, FundingAgencyForm, ClientForm)
-from .models import Opportunity, OpportunityFile, OpportunityGoReason, OpportunityNoGoReason
+from .models import BudgetTemplate, Opportunity, OpportunityFile, OpportunityGoReason, OpportunityNoGoReason
 
 from .serializers import OpportunitySerializer
 from .workflows.registry import get_active_workflow
@@ -791,3 +791,20 @@ class TransferOpportunityView(View):
         else:
             # Fallback to standard redirect for non-HTMX requests
             return HttpResponseRedirect(redirect_url)
+
+
+# Financial Contribution
+class OpportunityBudgetView(View):
+    model = BudgetTemplate
+    # form_class = OpportunityBudgetForm
+    template_name = "tracker/partials/fin_contribution_modal.html"
+
+    def get(self, request, *args, **kwargs):
+        template = BudgetTemplate.objects.get(is_active=True)
+        context = {
+            'template': template,
+            'columns': template.columns.all(),
+            'rows': template.rows.all(),
+        }
+
+        return render(request, self.template_name, context)
