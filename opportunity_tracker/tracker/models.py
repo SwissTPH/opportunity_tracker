@@ -366,7 +366,7 @@ class BudgetTemplateColumn(models.Model):
         unique_together = ("template", "key")
 
     def __str__(self):
-        return self.label
+        return ""
 
 
 class BudgetTemplateRow(models.Model):
@@ -398,7 +398,7 @@ class BudgetTemplateRow(models.Model):
         unique_together = ("template", "key")
 
     def __str__(self):
-        return self.label
+        return ""
 
 
 class OpportunityBudget(models.Model):

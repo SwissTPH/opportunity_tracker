@@ -2,12 +2,12 @@ from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 from notification.models import (NotificationChannel, NotificationSubscription,
                                  OpportunitySubscription)
-from unfold.admin import ModelAdmin
+from unfold.admin import ModelAdmin, TabularInline
 from unfold.contrib.import_export.forms import (ExportForm, ImportForm,
                                                 SelectableFieldsExportForm)
 
 from .models import (Client, Country, Currency, FundingAgency, Institute,
-                     Opportunity, Unit, GoReason, NoGoReason, OpportunityGoReason, OpportunityNoGoReason)
+                     Opportunity, Unit, GoReason, NoGoReason, OpportunityGoReason, OpportunityNoGoReason, BudgetTemplate, BudgetTemplateColumn, BudgetTemplateRow)
 
 from .resources import ClientResource, FundingAgencyResource, InstituteResource, UnitResource
 
@@ -129,3 +129,22 @@ class NoGoReasonAdmin(ModelAdmin, ImportExportModelAdmin):
     export_form_class = ExportForm
     list_display = ['reason']
     search_fields = ['reason']
+
+
+class BudgetTemplateColumnAdmin(TabularInline):
+    model = BudgetTemplateColumn
+    extra = 0
+
+
+class BudgetTemplateRowAdmin(TabularInline):
+    model = BudgetTemplateRow
+    extra = 0
+
+
+@admin.register(BudgetTemplate)
+class BudgetTemplateAdmin(ModelAdmin):
+    list_display = ("name", "is_active")
+    inlines = [
+        BudgetTemplateColumnAdmin,
+        BudgetTemplateRowAdmin
+    ]
