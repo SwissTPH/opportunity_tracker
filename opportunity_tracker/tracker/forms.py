@@ -51,7 +51,7 @@ class OpportunityForm(forms.ModelForm):
             'files': forms.ClearableFileInput(),
             'is_noncompetitive': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
             'duration_months': forms.TextInput(attrs={'placeholder': 'Enter duration in months'}),
-            'proposal_amount': forms.TextInput(attrs={'placeholder': 'Enter proposal amount'}),
+            'proposal_amount': forms.TextInput(attrs={'placeholder': 'Financial Contribution', 'readonly': 'true', 'aria-describedby': 'btn-configure-budget'}),
             'notes': forms.Textarea(attrs={'placeholder': 'Enter additional notes'})
         }
 

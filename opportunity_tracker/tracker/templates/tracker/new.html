@@ -109,24 +109,28 @@
       {%endif%}
     </div>
 
-    <div class="col-md-2">
-      <div class="form-floating">
-        {{form.currency|add_class:"form-select"}}
-        <label for="duration_months" class="form-label">Currency</label>
-      </div>
-      {%if form.currency.errors%}
-        <div class="text-danger">{{form.currency.errors|striptags}}</div>
-      {%endif%}
-    </div>
-    
-    <div class="col-md-4">
-      <div class="form-floating">
+    <div class="col-md-6">
+      <div class="input-group">
+        <div class="input-group-text p-0 border-0 bg-transparent">
+          <div class="form-floating">
+          {{form.currency|add_class:"form-select"}}
+          <label for="duration_months" class="form-label">Currency</label>
+          </div>
+          {%if form.currency.errors%}
+            <div class="text-danger">{{form.currency.errors|striptags}}</div>
+          {%endif%}
+        </div>
+        
         {{form.proposal_amount|add_class:"form-control"}}
-        <label for="propsal_amount" class="form-label">Proposal Amount</label>
+        <div class="input-group-append">
+          <button class="btn btn-outline-info" type="button" id="btn-configure-budget" style="height:100%">Budget</button>
+        </div>
+
+        {%if form.proposal_amount.errors%}
+        <div class="text-danger">{{form.proposal_amount.errors|striptags}}</div>
+        {%endif%}
+
       </div>
-      {%if form.proposal_amount.errors%}
-      <div class="text-danger">{{form.proposal_amount.errors|striptags}}</div>
-      {%endif%}
     </div>
       
       <div class="form-floating col-md-4">
