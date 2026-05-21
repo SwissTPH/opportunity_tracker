@@ -404,7 +404,7 @@ class BudgetTemplateRow(models.Model):
 
 
 class OpportunityBudget(models.Model):
-    Opportunity = models.OneToOneField(
+    opportunity = models.OneToOneField(
         Opportunity,
         on_delete=models.CASCADE,
         related_name="budget"
