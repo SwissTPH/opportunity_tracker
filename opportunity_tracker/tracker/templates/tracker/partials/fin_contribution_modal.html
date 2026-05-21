@@ -172,13 +172,42 @@ function recalculateTotals() {
 }
 
 function saveBudgetModal(){
-  const ex_rate = $("#id_exchange_rate");
-  if(!ex_rate.val()){
-    ex_rate.addClass("is-invalid");
-    ex_rate.focus();
+  const exchangeRate = $("#id_exchange_rate");
+  if(!exchangeRate.val()){
+    exchangeRate.addClass("is-invalid");
+    exchangeRate.focus();
     return;
   }else{
-    console.log("Modal valid");
+    exchangeRate.removeClass("is-invalid");
+    const payload = {
+      exchange_rate: parseFloat(exchangeRate.val()),
+      values: []
+    }
+
+    $("input[data-row][data-column]").each(function(){
+      const rowType = $(this).data("row-type");
+      if (rowType == 'total'){
+        return;
+      } 
+
+      const value = $(this).val();
+      if (!value){
+        return;}
+
+      payload.values.push({
+        row: $(this).data("row"),
+        column: $(this).data("column"),
+        value: parseFloat(value)
+      });
+    });
+
+    $("#id_budget_payload").val(
+      JSON.stringify(payload)
+    );
+
+    $(".modal-footer button[data-bs-dismiss='modal']")
+      .trigger("click");
+
   }
 }
 

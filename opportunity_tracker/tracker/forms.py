@@ -37,6 +37,8 @@ class OpportunityForm(forms.ModelForm):
         queryset=FundingAgency.objects.all(), required=False)
     client = ClientChoiceField(
         queryset=Client.objects.all(), required=False)
+    budget_payload = forms.CharField(
+        required=False, widget=forms.HiddenInput())
 
     class Meta:
         model = Opportunity
