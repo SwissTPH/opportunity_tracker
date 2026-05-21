@@ -205,6 +205,12 @@
         JSON.stringify(payload)
       );
 
+      const proposalAmount = $(
+        "input[data-row-type='total'][data-role='source']"
+      ).val()
+
+      $("#id_proposal_amount").val(proposalAmount);
+
       $(".modal-footer button[data-bs-dismiss='modal']")
         .trigger("click");
 
