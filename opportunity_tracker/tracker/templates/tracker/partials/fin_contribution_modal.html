@@ -128,90 +128,114 @@
     convertedInput.val(convertedValue);
   }
 
-function recalculateTotals() {
+  function recalculateTotals() {
 
-  let sourceTotal = 0;
-  let convertedTotal = 0;
+    let sourceTotal = 0;
+    let convertedTotal = 0;
 
-  $("input[data-role='source']")
-    .each(function () {
+    $("input[data-role='source']")
+      .each(function () {
 
-      const rowType = $(this).data("row-type");
+        const rowType = $(this).data("row-type");
 
-      if (rowType === "total") {
-        return;
+        if (rowType === "total") {
+          return;
+        }
+
+        sourceTotal += parseFloat(
+          $(this).val()
+        ) || 0;
+      });
+
+
+    $("input[data-role='converted']")
+      .each(function () {
+
+        const rowType = $(this).data("row-type");
+
+        if (rowType === "total") {
+          return;
+        }
+
+        convertedTotal += parseFloat(
+          $(this).val()
+        ) || 0;
+      });
+
+
+    $("input[data-row-type='total'][data-role='source']")
+      .val(sourceTotal.toFixed(2));
+
+
+    $("input[data-row-type='total'][data-role='converted']")
+      .val(convertedTotal.toFixed(2));
+  }
+
+  function saveBudgetModal(){
+    const exchangeRate = $("#id_exchange_rate");
+    if(!exchangeRate.val()){
+      exchangeRate.addClass("is-invalid");
+      exchangeRate.focus();
+      return;
+    }else{
+      exchangeRate.removeClass("is-invalid");
+      const payload = {
+        exchange_rate: parseFloat(exchangeRate.val()),
+        values: []
       }
 
-      sourceTotal += parseFloat(
-        $(this).val()
-      ) || 0;
-    });
+      $("input[data-row][data-column]").each(function(){
+        const rowType = $(this).data("row-type");
+        if (rowType == 'total'){
+          return;
+        } 
 
+        const value = $(this).val();
+        if (!value){
+          return;}
 
-  $("input[data-role='converted']")
-    .each(function () {
+        payload.values.push({
+          row: $(this).data("row"),
+          column: $(this).data("column"),
+          value: parseFloat(value)
+        });
+      });
 
-      const rowType = $(this).data("row-type");
+      $("#id_budget_payload").val(
+        JSON.stringify(payload)
+      );
 
-      if (rowType === "total") {
-        return;
-      }
+      $(".modal-footer button[data-bs-dismiss='modal']")
+        .trigger("click");
 
-      convertedTotal += parseFloat(
-        $(this).val()
-      ) || 0;
-    });
+    }
+  }
 
-
-  $("input[data-row-type='total'][data-role='source']")
-    .val(sourceTotal.toFixed(2));
-
-
-  $("input[data-row-type='total'][data-role='converted']")
-    .val(convertedTotal.toFixed(2));
-}
-
-function saveBudgetModal(){
-  const exchangeRate = $("#id_exchange_rate");
-  if(!exchangeRate.val()){
-    exchangeRate.addClass("is-invalid");
-    exchangeRate.focus();
-    return;
-  }else{
-    exchangeRate.removeClass("is-invalid");
-    const payload = {
-      exchange_rate: parseFloat(exchangeRate.val()),
-      values: []
+  function loadBudgetPayload(){
+    const payloadField = $("#id_budget_payload");
+    if (!payloadField.val()){
+      return;
     }
 
-    $("input[data-row][data-column]").each(function(){
-      const rowType = $(this).data("row-type");
-      if (rowType == 'total'){
-        return;
-      } 
+    const payload = JSON.parse(payloadField.val());
 
-      const value = $(this).val();
-      if (!value){
-        return;}
+    $("#id_exchange_rate").val(payload.exchange_rate);
 
-      payload.values.push({
-        row: $(this).data("row"),
-        column: $(this).data("column"),
-        value: parseFloat(value)
-      });
+    payload.values.forEach(function(item){
+      const input = $(
+        `input[data-row="${item.row}"][data-column="${item.column}"]`
+      );
+
+      input.val(item.value);
+
     });
 
-    $("#id_budget_payload").val(
-      JSON.stringify(payload)
-    );
-
-    $(".modal-footer button[data-bs-dismiss='modal']")
-      .trigger("click");
-
+    recalculateTotals();
   }
-}
 
   $(document).ready(function () {
+
+    loadBudgetPayload();
 
     $("input[data-role='source']")
       .on("input", function () {
