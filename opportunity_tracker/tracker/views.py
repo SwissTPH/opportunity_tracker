@@ -26,7 +26,7 @@ from notification.models import OpportunitySubscription
 from .forms import (OpportunityBudgetForm, OpportunityDetailForm, OpportunityDetailAnonymousForm, OpportunityForm,
                     OpportunitySearchForm, SubmitProposalForm,
                     UpdateOpportunityForm, UpdateStatusForm, FundingAgencyForm, ClientForm)
-from .models import BudgetTemplate, Currency, Opportunity, OpportunityFile, OpportunityGoReason, OpportunityNoGoReason
+from .models import BudgetTemplate, BudgetTemplateColumn, BudgetTemplateRow, Currency, Opportunity, OpportunityBudget, OpportunityBudgetValue, OpportunityFile, OpportunityGoReason, OpportunityNoGoReason
 
 from .serializers import OpportunitySerializer
 from .workflows.registry import get_active_workflow
@@ -147,6 +147,35 @@ class OpportunityCreateView(CreateView):
     success_url = reverse_lazy("opportunities")
     login_url = "accounts:login"
 
+    def _create_budget(self, opportunity, budget_payload):
+
+        payload = json.loads(budget_payload)
+
+        template = BudgetTemplate.objects.get(is_active=True)
+
+        budget = OpportunityBudget.objects.create(
+            opportunity=opportunity, template=template, ex_rate_to_default_cur=payload.get("exchange_rate"))
+
+        values_to_create = []
+
+        for item in payload.get("values", []):
+            row = BudgetTemplateRow.objects.get(
+                template=template, key=item["row"])
+
+            column = BudgetTemplateColumn.objects.get(
+                template=template, key=item["column"])
+
+            values_to_create.append(
+                OpportunityBudgetValue(
+                    budget=budget,
+                    row=row,
+                    column=column,
+                    value=item["value"]
+                )
+            )
+
+        OpportunityBudgetValue.objects.bulk_create(values_to_create)
+
     def get_initial(self):
         initial = super().get_initial()
         # Check if there's initial data from a transfer request (via query params)
@@ -189,6 +218,15 @@ class OpportunityCreateView(CreateView):
         # Use transaction to ensure atomicity of transfer operation
         with transaction.atomic():
             response = super().form_valid(form)
+
+            # Create financial contributions
+            budget_payload = form.cleaned_data.get("budget_payload")
+
+            if budget_payload:
+                self._create_budget(
+                    self.object,
+                    budget_payload
+                )
 
             # Handle file upload
             files = self.request.FILES.getlist("files")
