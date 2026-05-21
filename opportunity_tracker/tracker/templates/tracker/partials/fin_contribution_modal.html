@@ -89,7 +89,7 @@
       type="button"
       class="btn btn-success"
       id="saveFinContributionButton"
-      onclick="submitForm()"
+      onclick="saveBudgetModal()"
     >
       Save <img id="spinnerUpdate"
       src="{% static "images/bouncing-circles.svg" %}" alt=""
@@ -171,7 +171,16 @@ function recalculateTotals() {
     .val(convertedTotal.toFixed(2));
 }
 
-
+function saveBudgetModal(){
+  const ex_rate = $("#id_exchange_rate");
+  if(!ex_rate.val()){
+    ex_rate.addClass("is-invalid");
+    ex_rate.focus();
+    return;
+  }else{
+    console.log("Modal valid");
+  }
+}
 
   $(document).ready(function () {
 
