@@ -308,16 +308,16 @@
 
 
   function toggleBudgetButton(){
-      if($("#id_currency").val()){
-        $("#btn-configure-budget").prop('disabled', false);
-      }else{
-        $("#btn-configure-budget").prop('disabled', true);
-      }
+    if($("#id_currency").val()){
+      $("#btn-configure-budget").prop('disabled', false);
+    }else{
+      $("#btn-configure-budget").prop('disabled', true);
     }
+  }
 
-    $("#id_currency").on("change", function() {
-      toggleBudgetButton();
-    });
+  $("#id_currency").on("change", function() {
+    toggleBudgetButton();
+  });
   
   toggleBudgetButton();
 

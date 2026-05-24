@@ -106,14 +106,38 @@
           {%endif%}
         </div>
 
-        <div class="col-md-2">
-          <div class="form-floating">
-            {{form.currency|add_class:"form-select"}}
-            <label for="currency" class="form-label">Currency</label>
+        <div class="col-md-6">
+          {{form.budget_payload}}
+          <div class="input-group">
+            <div class="input-group-text p-0 border-0 bg-transparent">
+              <div class="form-floating">
+                {{form.currency|add_class:"form-select"}}
+                <label for="duration_months" class="form-label">Currency</label>
+              </div>
+              {%if form.currency.errors%}
+                <div class="text-danger">{{form.currency.errors|striptags}}</div>
+              {%endif%}
+            </div>
+            
+            {{form.proposal_amount|add_class:"form-control"}}
+            
+            <div class="input-group-append">
+              <button disabled class="btn btn-outline-info" type="button" id="btn-configure-budget" style="height:100%"
+                data-bs-toggle="modal"
+                data-bs-target="#modal"
+                data-modal-size="modal-lg"
+                hx-get="{% url "opportunity_budget" %}"
+                hx-target="#dialog"
+                hx-trigger="click"
+                hx-include="#id_currency"
+              >Budget</button>
+            </div>
+
+            {%if form.proposal_amount.errors%}
+            <div class="text-danger">{{form.proposal_amount.errors|striptags}}</div>
+            {%endif%}
+
           </div>
-          {%if form.currency.errors%}
-            <div class="text-danger">{{form.currency.errors|striptags}}</div>
-          {%endif%}
         </div>
         
         <div class="col-md-4">
@@ -369,6 +393,20 @@
   $("#id_proposal_lead").select2({theme: 'bootstrap-5', placeholder: 'Choose a proposal lead', allowClear: true});
   $("#id_lead_institute").select2({theme: 'bootstrap-5', placeholder: 'Choose a lead organization', allowClear: true});
   $("#id_partners").select2({theme: 'bootstrap-5', placeholder: 'Choose partners', allowClear: true});
+
+  function toggleBudgetButton(){
+    if($("#id_currency").val()){
+      $("#btn-configure-budget").prop('disabled', false);
+    }else{
+      $("#btn-configure-budget").prop('disabled', true);
+    }
+  }
+
+  $("#id_currency").on("change", function() {
+    toggleBudgetButton();
+  });
+  
+  toggleBudgetButton();
 
   document.body.addEventListener('htmx:afterRequest', function (event) {
     const target = event.detail.target; // The element that triggered the request

@@ -1,4 +1,5 @@
 import datetime
+import json
 from django.forms.widgets import Select
 from typing import Any, Mapping
 from django import forms
@@ -9,7 +10,7 @@ from django.core.files.base import File
 from django.db.models.base import Model
 from django.forms.utils import ErrorList
 from django.urls import reverse, reverse_lazy
-from .models import Client, Country, FundingAgency, GoReason, Institute, Opportunity, OpportunityGoReason, OpportunityNoGoReason
+from .models import Client, Country, FundingAgency, GoReason, Institute, Opportunity, OpportunityBudget, OpportunityGoReason, OpportunityNoGoReason
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 
@@ -99,6 +100,9 @@ class UpdateOpportunityForm(forms.ModelForm):
     partners = forms.ModelMultipleChoiceField(
         queryset=Institute.objects.all(), required=False, label="Partners")
 
+    budget_payload = forms.CharField(
+        required=False, widget=forms.HiddenInput())
+
     class Meta:
         model = Opportunity
         fields = ['ref_no', 'title', 'funding_agency', 'client', 'opp_type', 'countries',
@@ -118,7 +122,7 @@ class UpdateOpportunityForm(forms.ModelForm):
             'files': forms.ClearableFileInput(),
             'is_noncompetitive': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
             'duration_months': forms.TextInput(attrs={'placeholder': 'Enter duration in months'}),
-            'proposal_amount': forms.TextInput(attrs={'placeholder': 'Enter proposal amount'}),
+            'proposal_amount': forms.TextInput(attrs={'placeholder': 'Financial Contribution', 'readonly': 'true', 'aria-describedby': 'btn-configure-budget'}),
             'notes': forms.Textarea(attrs={'placeholder': 'Enter additional notes'}),
             'submission_validity': forms.NumberInput(attrs={'placeholder': 'Enter validity days'})
         }
@@ -178,6 +182,27 @@ class UpdateOpportunityForm(forms.ModelForm):
                 'hx-swap': 'none',
                 'data-bs-toast-target': '#successToast',
             })
+
+        # load budget
+        if self.instance.pk:
+            try:
+                budget = self.instance.budget
+                payload = {
+                    "exchange_rate": float(budget.ex_rate_to_default_cur),
+                    "values": []
+                }
+
+                for value in budget.values.select_related("row", "column"):
+                    payload["values"].append({
+                        "row": value.row.key,
+                        "column": value.column.key,
+                        "value": float(value.value)
+                    })
+
+                self.initial["budget_payload"] = json.dumps(payload)
+
+            except OpportunityBudget.DoesNotExist:
+                pass
 
     status = forms.IntegerField(initial=1, widget=forms.HiddenInput())
     is_subscribed = forms.BooleanField(
