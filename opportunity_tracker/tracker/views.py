@@ -256,6 +256,18 @@ class OpportunityUpdateView(UpdateView):
 
         response = super().form_valid(form)
 
+        # Load budget
+        budget_payload = form.cleaned_data.get("budget_payload")
+
+        if budget_payload:
+            if hasattr(self.object, "budget"):
+                self.object.budget.delete()
+
+            create_budget(
+                self.object,
+                budget_payload
+            )
+
         # handle file upload
         # Handle file upload
         files = self.request.FILES.getlist("files")
