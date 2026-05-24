@@ -4,6 +4,11 @@
   id="opportunityBudgetForm"
   class="modal-content"
   hx-target="#dialog"
+  {% if opportunity_id %}
+    data-opportunity-id="{{ opportunity_id }}"
+    hx-post="{% url 'opportunity_budget_update' %}"
+    hx-swap="none"
+  {% endif %}
   novalidate
 >
   {% csrf_token %}
@@ -19,6 +24,12 @@
     ></button>
   </div>
   <div class="modal-body">
+    <input type="hidden" name="budget_payload" id="modal_budget_payload">
+    <input type="hidden" name="proposal_amount" id="modal_proposal_amount">
+    {% if opportunity_id %}
+      <input type="hidden" name="opportunity_id" value="{{ opportunity_id }}">
+    {% endif %}
+    
     <div class="card">
       <div class="card-body">
         <div class="row g-3">
@@ -91,7 +102,7 @@
       id="saveFinContributionButton"
       onclick="saveBudgetModal()"
     >
-      Save <img id="spinnerUpdate"
+      Apply <img id="spinnerUpdate"
       src="{% static "images/bouncing-circles.svg" %}" alt=""
       style="height:25px;" class="htmx-indicator" />
     </button>
@@ -201,18 +212,45 @@
         });
       });
 
-      $("#id_budget_payload").val(
-        JSON.stringify(payload)
-      );
-
       const proposalAmount = $(
         "input[data-row-type='total'][data-role='source']"
       ).val()
 
-      $("#id_proposal_amount").val(proposalAmount);
+      const opportunityId = $("#opportunityBudgetForm")
+        .data("opportunity-id");
 
-      $(".modal-footer button[data-bs-dismiss='modal']")
-        .trigger("click");
+      if (opportunityId){
+        $("#modal_budget_payload").val(
+          JSON.stringify(payload)
+        );
+
+        $("#id_budget_payload").val(
+            JSON.stringify(payload)
+          );
+
+          $("#modal_proposal_amount").val(
+            proposalAmount
+          );
+          
+        $("#id_proposal_amount").val(proposalAmount);
+
+
+        htmx.trigger("#opportunityBudgetForm", "submit");
+
+      } else{
+        $("#id_budget_payload").val(
+            JSON.stringify(payload)
+          );
+
+        $("#id_proposal_amount").val(proposalAmount);
+
+        $(".modal-footer button[data-bs-dismiss='modal']")
+          .trigger("click");
+
+        
+      }
+
+      
 
     }
   }

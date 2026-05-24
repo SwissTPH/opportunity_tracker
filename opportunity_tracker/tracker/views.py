@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_not_required
 from django.utils.decorators import method_decorator
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -255,18 +255,6 @@ class OpportunityUpdateView(UpdateView):
             form.instance.ref_no = self.object.ref_no
 
         response = super().form_valid(form)
-
-        # Load budget
-        budget_payload = form.cleaned_data.get("budget_payload")
-
-        if budget_payload:
-            if hasattr(self.object, "budget"):
-                self.object.budget.delete()
-
-            create_budget(
-                self.object,
-                budget_payload
-            )
 
         # handle file upload
         # Handle file upload
@@ -824,6 +812,7 @@ class OpportunityBudgetView(View):
     def get(self, request, *args, **kwargs):
         template = BudgetTemplate.objects.get(is_active=True)
         currency_id = request.GET.get('currency')
+        opportunity_id = request.GET.get('opportunity_id')
         currency = Currency.objects.filter(pk=currency_id).first()
 
         print(currency_id)
@@ -833,7 +822,34 @@ class OpportunityBudgetView(View):
             'template': template,
             'columns': template.columns.all(),
             'rows': template.rows.all(),
-            'currency': currency
+            'currency': currency,
+            'opportunity_id': opportunity_id
         }
 
         return render(request, self.template_name, context)
+
+
+class OpportunityBudgetUpdateView(View):
+    def post(self, request, *args, **kwargs):
+        opportunity_id = request.POST.get("opportunity_id")
+        budget_payload = request.POST.get("budget_payload")
+        proposal_amount = request.POST.get("proposal_amount")
+
+        if budget_payload:
+            opportunity = get_object_or_404(
+                Opportunity,
+                pk=opportunity_id
+            )
+
+            if hasattr(opportunity, "budget"):
+                opportunity.budget.delete()
+
+            create_budget(
+                opportunity,
+                budget_payload
+            )
+
+            opportunity.proposal_amount = proposal_amount
+            opportunity.save(update_fields=["proposal_amount"])
+
+            return HttpResponse(status=204)
