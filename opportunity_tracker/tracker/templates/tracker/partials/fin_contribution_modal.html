@@ -1,0 +1,309 @@
+{% load static %} {% load form_tags %}
+
+<form
+  id="opportunityBudgetForm"
+  class="modal-content"
+  hx-target="#dialog"
+  {% if opportunity_id %}
+    data-opportunity-id="{{ opportunity_id }}"
+    hx-post="{% url 'opportunity_budget_update' %}"
+    hx-swap="none"
+  {% endif %}
+  novalidate
+>
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title" id="finContributionLabel">
+      Financial Contribution
+    </h5>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="modal"
+      aria-label="Close"
+    ></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" name="budget_payload" id="modal_budget_payload">
+    <input type="hidden" name="proposal_amount" id="modal_proposal_amount">
+    {% if opportunity_id %}
+      <input type="hidden" name="opportunity_id" value="{{ opportunity_id }}">
+    {% endif %}
+    
+    <div class="card">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="form-floating  mb-3">
+            {{form.exchange_rate|add_class:"form-control"}}
+            <label for="exchange_rate">Exchange Rate {% if currency %}({{currency.code}}){% endif %}</label>
+          </div>
+          {%if form.exchange_rate.errors%}
+          <div class="text-danger">{{form.exchange_rate.errors|striptags}}</div>
+          {%endif%}
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <tr>
+            <thead class="table-light">
+              <th style="width: 40%;"></th>
+                {% for column in columns %}
+                  <th>{{column.label}}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr class="{% if row.row_type == 'total' %}table-secondary fw-bold{% endif %}">
+                <td>{{row.label}}</td>
+                {% for column in columns %}
+                  <td>
+                    <input
+                      type="number"
+                      step="0.01"
+                      class="form-control text-end 
+                      {% if column.is_readonly or row.row_type == 'total' %}bg-light{% endif %}
+                      {% if row.row_type == 'total' %} fw-bold {% endif %}
+                      "
+                      
+                      {% if column.is_readonly or row.row_type == 'total' %}readonly{% endif %}
+                      
+                      data-row="{{ row.key }}"
+                      data-column="{{ column.key }}"
+                      data-row-type="{{ row.row_type }}"
+
+                      {% if not column.is_readonly %}
+                        data-role="source"
+                      {% else %}
+                        data-role="converted"
+                      {% endif %}
+
+                      name="budget_{{ row.key }}_{{ column.key }}"
+                    >
+                  </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+      Cancel
+    </button>
+    <button
+      type="button"
+      class="btn btn-success"
+      id="saveFinContributionButton"
+      onclick="saveBudgetModal()"
+    >
+      Apply <img id="spinnerUpdate"
+      src="{% static "images/bouncing-circles.svg" %}" alt=""
+      style="height:25px;" class="htmx-indicator" />
+    </button>
+  </div>
+</form>
+
+<script>
+  function recalculateRow(rowKey) {
+
+    const exchangeRate = parseFloat(
+      $("#id_exchange_rate").val()
+    );
+
+    if (!exchangeRate || exchangeRate <= 0) {
+      return;
+    }
+
+    const sourceInput = $(
+      `input[data-row="${rowKey}"][data-role="source"]`
+    );
+
+    const convertedInput = $(
+      `input[data-row="${rowKey}"][data-role="converted"]`
+    );
+
+    const sourceValue = parseFloat(
+      sourceInput.val()
+    ) || 0;
+
+    const convertedValue = (
+      sourceValue / exchangeRate
+    ).toFixed(2);
+
+    convertedInput.val(convertedValue);
+  }
+
+  function recalculateTotals() {
+
+    let sourceTotal = 0;
+    let convertedTotal = 0;
+
+    $("input[data-role='source']")
+      .each(function () {
+
+        const rowType = $(this).data("row-type");
+
+        if (rowType === "total") {
+          return;
+        }
+
+        sourceTotal += parseFloat(
+          $(this).val()
+        ) || 0;
+      });
+
+
+    $("input[data-role='converted']")
+      .each(function () {
+
+        const rowType = $(this).data("row-type");
+
+        if (rowType === "total") {
+          return;
+        }
+
+        convertedTotal += parseFloat(
+          $(this).val()
+        ) || 0;
+      });
+
+
+    $("input[data-row-type='total'][data-role='source']")
+      .val(sourceTotal.toFixed(2));
+
+
+    $("input[data-row-type='total'][data-role='converted']")
+      .val(convertedTotal.toFixed(2));
+  }
+
+  function saveBudgetModal(){
+    const exchangeRate = $("#id_exchange_rate");
+    if(!exchangeRate.val()){
+      exchangeRate.addClass("is-invalid");
+      exchangeRate.focus();
+      return;
+    }else{
+      exchangeRate.removeClass("is-invalid");
+      const payload = {
+        exchange_rate: parseFloat(exchangeRate.val()),
+        values: []
+      }
+
+      $("input[data-row][data-column]").each(function(){
+        const rowType = $(this).data("row-type");
+        if (rowType == 'total'){
+          return;
+        } 
+
+        const value = $(this).val();
+        if (!value){
+          return;}
+
+        payload.values.push({
+          row: $(this).data("row"),
+          column: $(this).data("column"),
+          value: parseFloat(value)
+        });
+      });
+
+      const proposalAmount = $(
+        "input[data-row-type='total'][data-role='source']"
+      ).val()
+
+      const opportunityId = $("#opportunityBudgetForm")
+        .data("opportunity-id");
+
+      if (opportunityId){
+        $("#modal_budget_payload").val(
+          JSON.stringify(payload)
+        );
+
+        $("#id_budget_payload").val(
+            JSON.stringify(payload)
+          );
+
+          $("#modal_proposal_amount").val(
+            proposalAmount
+          );
+          
+        $("#id_proposal_amount").val(proposalAmount);
+
+
+        htmx.trigger("#opportunityBudgetForm", "submit");
+
+      } else{
+        $("#id_budget_payload").val(
+            JSON.stringify(payload)
+          );
+
+        $("#id_proposal_amount").val(proposalAmount);
+
+        $(".modal-footer button[data-bs-dismiss='modal']")
+          .trigger("click");
+
+        
+      }
+
+      
+
+    }
+  }
+
+  function loadBudgetPayload(){
+    const payloadField = $("#id_budget_payload");
+    if (!payloadField.val()){
+      return;
+    }
+
+    const payload = JSON.parse(payloadField.val());
+
+    $("#id_exchange_rate").val(payload.exchange_rate);
+
+    payload.values.forEach(function(item){
+      const input = $(
+        `input[data-row="${item.row}"][data-column="${item.column}"]`
+      );
+
+      input.val(item.value);
+
+    });
+
+    recalculateTotals();
+  }
+
+  $(document).ready(function () {
+
+    loadBudgetPayload();
+
+    $("input[data-role='source']")
+      .on("input", function () {
+
+        const rowKey = $(this).data("row");
+
+        recalculateRow(rowKey);
+        recalculateTotals();
+      });
+
+
+    $("#id_exchange_rate")
+      .on("input", function () {
+
+        $("input[data-role='source']")
+          .each(function () {
+
+            const rowKey = $(this).data("row");
+
+            recalculateRow(rowKey);
+          });
+          recalculateTotals();
+      });
+
+  });
+
+</script>

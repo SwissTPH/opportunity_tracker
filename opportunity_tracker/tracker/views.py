@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_not_required
 from django.utils.decorators import method_decorator
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -22,11 +22,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from notification.models import OpportunitySubscription
+from tracker.services.fin_contribution_services import create_budget
 
-from .forms import (OpportunityDetailForm, OpportunityDetailAnonymousForm, OpportunityForm,
+from .forms import (OpportunityBudgetForm, OpportunityDetailForm, OpportunityDetailAnonymousForm, OpportunityForm,
                     OpportunitySearchForm, SubmitProposalForm,
                     UpdateOpportunityForm, UpdateStatusForm, FundingAgencyForm, ClientForm)
-from .models import Opportunity, OpportunityFile, OpportunityGoReason, OpportunityNoGoReason
+from .models import BudgetTemplate, BudgetTemplateColumn, BudgetTemplateRow, Currency, Opportunity, OpportunityBudget, OpportunityBudgetValue, OpportunityFile, OpportunityGoReason, OpportunityNoGoReason
 
 from .serializers import OpportunitySerializer
 from .workflows.registry import get_active_workflow
@@ -189,6 +190,15 @@ class OpportunityCreateView(CreateView):
         # Use transaction to ensure atomicity of transfer operation
         with transaction.atomic():
             response = super().form_valid(form)
+
+            # Create financial contributions
+            budget_payload = form.cleaned_data.get("budget_payload")
+
+            if budget_payload:
+                create_budget(
+                    self.object,
+                    budget_payload
+                )
 
             # Handle file upload
             files = self.request.FILES.getlist("files")
@@ -791,3 +801,55 @@ class TransferOpportunityView(View):
         else:
             # Fallback to standard redirect for non-HTMX requests
             return HttpResponseRedirect(redirect_url)
+
+
+# Financial Contribution
+class OpportunityBudgetView(View):
+    model = BudgetTemplate
+    form_class = OpportunityBudgetForm
+    template_name = "tracker/partials/fin_contribution_modal.html"
+
+    def get(self, request, *args, **kwargs):
+        template = BudgetTemplate.objects.get(is_active=True)
+        currency_id = request.GET.get('currency')
+        opportunity_id = request.GET.get('opportunity_id')
+        currency = Currency.objects.filter(pk=currency_id).first()
+
+        print(currency_id)
+
+        context = {
+            'form': OpportunityBudgetForm(),
+            'template': template,
+            'columns': template.columns.all(),
+            'rows': template.rows.all(),
+            'currency': currency,
+            'opportunity_id': opportunity_id
+        }
+
+        return render(request, self.template_name, context)
+
+
+class OpportunityBudgetUpdateView(View):
+    def post(self, request, *args, **kwargs):
+        opportunity_id = request.POST.get("opportunity_id")
+        budget_payload = request.POST.get("budget_payload")
+        proposal_amount = request.POST.get("proposal_amount")
+
+        if budget_payload:
+            opportunity = get_object_or_404(
+                Opportunity,
+                pk=opportunity_id
+            )
+
+            if hasattr(opportunity, "budget"):
+                opportunity.budget.delete()
+
+            create_budget(
+                opportunity,
+                budget_payload
+            )
+
+            opportunity.proposal_amount = proposal_amount
+            opportunity.save(update_fields=["proposal_amount"])
+
+            return HttpResponse(status=204)
