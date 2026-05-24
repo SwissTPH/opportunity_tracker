@@ -140,16 +140,6 @@
           </div>
         </div>
         
-        <div class="col-md-4">
-          <div class="form-floating">
-            {{form.proposal_amount|add_class:"form-control"}}
-            <label for="propsal_amount" class="form-label">Proposal Amount</label>
-          </div>
-          {%if form.proposal_amount.errors%}
-          <div class="text-danger">{{form.proposal_amount.errors|striptags}}</div>
-          {%endif%}
-        </div>
-
         <div class="form-floating col-md-4">
           {{form.due_date|add_class:"form-control"}}
           <label for="due_date" class="form-label">Due Date</label>
