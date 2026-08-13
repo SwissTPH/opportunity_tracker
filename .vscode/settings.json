@@ -1,4 +1,7 @@
 {
+  "terminal.integrated.env.osx": {
+    "DJANGO_ENV": "development"
+  },
   "emmet.includeLanguages": {
     "django-html": "html"
   }
