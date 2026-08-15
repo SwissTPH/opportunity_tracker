@@ -72,6 +72,10 @@ class OpportunityForm(forms.ModelForm):
             'data-entity': 'client',
         })
 
+        default_currency = Currency.objects.filter(is_default=True).first()
+        if default_currency:
+            self.fields['currency'].initial = default_currency
+
     # def clean(self) -> dict[str, Any]:
     #     cleaned_data = super().clean()
 
@@ -191,7 +195,7 @@ class UpdateOpportunityForm(forms.ModelForm):
                 budget = self.instance.budget
                 payload = {
                     "exchange_rate": float(budget.ex_rate_to_default_cur),
-                    "ex_currency": self.instance.currency.code,
+                    "ex_currency": budget.ex_currency.code,
                     "values": []
                 }
 

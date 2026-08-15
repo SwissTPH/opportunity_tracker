@@ -109,19 +109,11 @@
       </div>
 
       <div class="col-md-6">
-        {{form.currency}}
         {{form.budget_payload}}
+        {{form.currency}}
         <div class="input-group" style="height:100%">
-          {% comment %} <div class="input-group-text p-0 border-0 bg-transparent">
-            <div class="form-floating">
-              {{form.currency|add_class:"form-select"}}
-              <label for="duration_months" class="form-label">Currency</label>
-            </div>
-            {%if form.currency.errors%}
-              <div class="text-danger">{{form.currency.errors|striptags}}</div>
-            {%endif%}
-          </div> {% endcomment %}
-          
+          <span class="input-group-text">{{form.currency.value}}</span>
+
           {{form.proposal_amount|add_class:"form-control"}}
           
           <div class="input-group-append">

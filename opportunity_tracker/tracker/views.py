@@ -754,18 +754,18 @@ class NewFundingAgencyView(View):
 
 
 class NewClientView(View):
-    template_name = "tracker/new_client.html"
-    form_class = ClientForm
-    success_url = reverse_lazy("new_opportunity")
+    template_name= "tracker/new_client.html"
+    form_class= ClientForm
+    success_url= reverse_lazy("new_opportunity")
 
     def get(self, request, *args, **kwargs):
-        form = self.form_class()
+        form= self.form_class()
         return render(request, self.template_name, {"form": form})
 
     def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST)
+        form= self.form_class(request.POST)
         if form.is_valid():
-            client = form.save()
+            client= form.save()
             if request.htmx:
                 return JsonResponse(
                     {
@@ -780,14 +780,14 @@ class NewClientView(View):
 
 class TransferOpportunityView(View):
     def post(self, request, pk):
-        opportunity = Opportunity.objects.get(id=pk)
+        opportunity= Opportunity.objects.get(id=pk)
 
         # Don't update status here - it will be updated in OpportunityCreateView.form_valid
         # only when the new RFP opportunity is successfully created
 
         # Use direct HttpResponseRedirect for more reliable redirection
         from django.http import HttpResponseRedirect
-        redirect_url = f"{reverse('new_opportunity')}?source_id={opportunity.id}&is_transfer=true"
+        redirect_url= f"{reverse('new_opportunity')}?source_id={opportunity.id}&is_transfer=true"
 
         print("Redirecting to:", redirect_url)
 
@@ -806,24 +806,19 @@ class TransferOpportunityView(View):
 
 # Financial Contribution
 class OpportunityBudgetView(View):
-    model = BudgetTemplate
-    form_class = OpportunityBudgetForm
-    template_name = "tracker/partials/fin_contribution_modal.html"
+    model= BudgetTemplate
+    form_class= OpportunityBudgetForm
+    template_name= "tracker/partials/fin_contribution_modal.html"
 
     def get(self, request, *args, **kwargs):
-        template = BudgetTemplate.objects.get(is_active=True)
-        currency_id = request.GET.get('currency')
-        opportunity_id = request.GET.get('opportunity_id')
-        currency = Currency.objects.filter(pk=currency_id).first()
+        template= BudgetTemplate.objects.get(is_active=True)
+        opportunity_id= request.GET.get('opportunity_id')
 
-        print(currency_id)
-
-        context = {
+        context= {
             'form': OpportunityBudgetForm(),
             'template': template,
             'columns': template.columns.all(),
             'rows': template.rows.all(),
-            'currency': currency,
             'opportunity_id': opportunity_id
         }
 
