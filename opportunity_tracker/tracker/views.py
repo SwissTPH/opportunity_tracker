@@ -718,7 +718,8 @@ class DownloadFolderView(View):
         with open(zip_path, "rb") as file:
             response = HttpResponse(
                 file.read(), content_type="application/zip")
-            response["Content-Disposition"] = f"attachment; filename={
+            response["Content-Disposition"] = f"attachment \
+            filename = {
                 zip_filename}"
 
         # Clean up the zip file
@@ -746,7 +747,7 @@ class NewFundingAgencyView(View):
                         "id": agency.id,
                         "name": agency.name
                     },
-                    status=201
+                    status = 201
                 )
 
         return render(request, self.template_name, {"form": form})
@@ -771,7 +772,7 @@ class NewClientView(View):
                         "id": client.id,
                         "name": client.name
                     },
-                    status=201
+                    status = 201
                 )
 
         return render(request, self.template_name, {"form": form})
@@ -793,8 +794,8 @@ class TransferOpportunityView(View):
         if request.htmx:
             return HttpResponse(
                 "",  # Empty response body
-                status=200,  # Use 200 instead of 204 for more reliable processing
-                headers={
+                status = 200,  # Use 200 instead of 204 for more reliable processing
+                headers = {
                     "HX-Redirect": redirect_url
                 }
             )
@@ -834,6 +835,14 @@ class OpportunityBudgetUpdateView(View):
         opportunity_id = request.POST.get("opportunity_id")
         budget_payload = request.POST.get("budget_payload")
         proposal_amount = request.POST.get("proposal_amount")
+
+        # Validate the form
+        form = OpportunityBudgetForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse(
+                {"errors": form.errors},
+                status = 400
+            )
 
         if budget_payload:
             opportunity = get_object_or_404(
