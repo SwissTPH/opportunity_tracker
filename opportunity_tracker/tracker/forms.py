@@ -10,7 +10,7 @@ from django.core.files.base import File
 from django.db.models.base import Model
 from django.forms.utils import ErrorList
 from django.urls import reverse, reverse_lazy
-from .models import Client, Country, FundingAgency, GoReason, Institute, Opportunity, OpportunityBudget, OpportunityGoReason, OpportunityNoGoReason
+from .models import Client, Country, Currency, FundingAgency, GoReason, Institute, Opportunity, OpportunityBudget, OpportunityGoReason, OpportunityNoGoReason
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 
@@ -55,7 +55,8 @@ class OpportunityForm(forms.ModelForm):
             'is_noncompetitive': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
             'duration_months': forms.TextInput(attrs={'placeholder': 'Enter duration in months'}),
             'proposal_amount': forms.TextInput(attrs={'placeholder': 'Financial Contribution', 'readonly': 'true', 'aria-describedby': 'btn-configure-budget'}),
-            'notes': forms.Textarea(attrs={'placeholder': 'Enter additional notes'})
+            'notes': forms.Textarea(attrs={'placeholder': 'Enter additional notes'}),
+            'currency': forms.HiddenInput(attrs={'required': 'false'})
         }
 
     def __init__(self, *args, **kwargs):
@@ -71,17 +72,17 @@ class OpportunityForm(forms.ModelForm):
             'data-entity': 'client',
         })
 
-    def clean(self) -> dict[str, Any]:
-        cleaned_data = super().clean()
+    # def clean(self) -> dict[str, Any]:
+    #     cleaned_data = super().clean()
 
-        currency = cleaned_data.get("currency")
-        proposal_amount = cleaned_data.get("proposal_amount")
-        if (proposal_amount) and not currency:
-            raise forms.ValidationError({
-                'currency': 'Please select a currency.'
-            })
+    #     currency = cleaned_data.get("currency")
+    #     proposal_amount = cleaned_data.get("proposal_amount")
+    #     if (proposal_amount) and not currency:
+    #         raise forms.ValidationError({
+    #             'currency': 'Please select a currency.'
+    #         })
 
-        return cleaned_data
+    #     return cleaned_data
 
     status = forms.IntegerField(initial=1, widget=forms.HiddenInput())
     title = forms.CharField(
@@ -124,7 +125,8 @@ class UpdateOpportunityForm(forms.ModelForm):
             'duration_months': forms.TextInput(attrs={'placeholder': 'Enter duration in months'}),
             'proposal_amount': forms.TextInput(attrs={'placeholder': 'Financial Contribution', 'readonly': 'true', 'aria-describedby': 'btn-configure-budget'}),
             'notes': forms.Textarea(attrs={'placeholder': 'Enter additional notes'}),
-            'submission_validity': forms.NumberInput(attrs={'placeholder': 'Enter validity days'})
+            'submission_validity': forms.NumberInput(attrs={'placeholder': 'Enter validity days'}),
+            'currency': forms.HiddenInput(attrs={'required': 'false'})
         }
 
     def clean(self) -> dict[str, Any]:
@@ -189,6 +191,7 @@ class UpdateOpportunityForm(forms.ModelForm):
                 budget = self.instance.budget
                 payload = {
                     "exchange_rate": float(budget.ex_rate_to_default_cur),
+                    "ex_currency": self.instance.currency.code,
                     "values": []
                 }
 
@@ -448,3 +451,9 @@ class ClientForm(forms.ModelForm):
 class OpportunityBudgetForm(forms.Form):
     exchange_rate = forms.DecimalField(max_digits=12, decimal_places=6, widget=forms.NumberInput(
         attrs={'placeholder': 'Enter exchange rate', 'step': '0.1'}))
+    ex_currency = forms.ModelChoiceField(
+        queryset=Currency.objects.all(),
+        required=True,
+        label="Currency",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )

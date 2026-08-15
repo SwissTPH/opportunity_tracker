@@ -33,16 +33,24 @@
     <div class="card">
       <div class="card-body">
         <div class="row g-3">
-          <div class="form-floating  mb-3">
-            {{form.exchange_rate|add_class:"form-control"}}
-            <label for="exchange_rate">Exchange Rate {% if currency %}({{currency.code}}){% endif %}</label>
-          </div>
-          {%if form.exchange_rate.errors%}
-          <div class="text-danger">{{form.exchange_rate.errors|striptags}}</div>
-          {%endif%}
-        </div>
+            <div class="form-floating col-md-6">
+                {{form.ex_currency}}
+                <label for="ex_currency" class="form-label">Currency</label>
+            </div>
+            {%if form.ex_currency.errors%}
+              <div class="text-danger">{{form.ex_currency.errors|striptags}}</div>
+            {%endif%}
 
-        <div class="table-responsive">
+            <div class="form-floating col-md-6">
+              {{form.exchange_rate|add_class:"form-control"}}
+              <label for="exchange_rate">Exchange Rate</label>
+            </div>
+            {%if form.exchange_rate.errors%}
+            <div class="text-danger">{{form.exchange_rate.errors|striptags}}</div>
+            {%endif%}
+          </div>
+        
+        <div class="table-responsive mt-3">
           <table class="table table-bordered align-middle">
             <tr>
             <thead class="table-light">
@@ -184,6 +192,17 @@
 
   function saveBudgetModal(){
     const exchangeRate = $("#id_exchange_rate");
+    const currency = $("#id_ex_currency");
+    
+    // Validate currency
+    if(!currency.val()){
+      currency.addClass("is-invalid");
+      currency.focus();
+      return;
+    }else{
+      currency.removeClass("is-invalid");
+    }
+    
     if(!exchangeRate.val()){
       exchangeRate.addClass("is-invalid");
       exchangeRate.focus();
@@ -191,6 +210,7 @@
     }else{
       exchangeRate.removeClass("is-invalid");
       const payload = {
+        ex_currency: currency.val(),
         exchange_rate: parseFloat(exchangeRate.val()),
         values: []
       }
@@ -213,7 +233,7 @@
       });
 
       const proposalAmount = $(
-        "input[data-row-type='total'][data-role='source']"
+        "input[data-row-type='total'][data-role='converted']"
       ).val()
 
       const opportunityId = $("#opportunityBudgetForm")
@@ -233,16 +253,18 @@
           );
           
         $("#id_proposal_amount").val(proposalAmount);
+        $("#id_currency").val(currency.val())
 
 
         htmx.trigger("#opportunityBudgetForm", "submit");
 
       } else{
-        $("#id_budget_payload").val(
+          $("#id_budget_payload").val(
             JSON.stringify(payload)
           );
 
         $("#id_proposal_amount").val(proposalAmount);
+        $("#id_currency").val(currency.val())
 
         $(".modal-footer button[data-bs-dismiss='modal']")
           .trigger("click");
@@ -264,6 +286,7 @@
     const payload = JSON.parse(payloadField.val());
 
     $("#id_exchange_rate").val(payload.exchange_rate);
+    $("#id_ex_currency").val(payload.ex_currency);
 
     payload.values.forEach(function(item){
       const input = $(
@@ -303,6 +326,47 @@
           });
           recalculateTotals();
       });
+
+    // Handle HTMX form validation errors
+    document.getElementById("opportunityBudgetForm").addEventListener("htmx:afterRequest", function(event) {
+      if (event.detail.xhr.status === 400) {
+        try {
+          const response = JSON.parse(event.detail.xhr.response);
+          if (response.errors) {
+            // Display currency errors
+            const currencyField = $("#id_ex_currency");
+            const exchangeRateField = $("#id_exchange_rate");
+            
+            if (response.errors.currency) {
+              currencyField.addClass("is-invalid");
+              // Display error message if not already shown
+              let errorDiv = currencyField.next(".invalid-feedback");
+              if (!errorDiv.length) {
+                errorDiv = $("<div class='invalid-feedback d-block text-danger'></div>");
+                currencyField.after(errorDiv);
+              }
+              errorDiv.text(response.errors.currency.join(", "));
+            } else {
+              currencyField.removeClass("is-invalid");
+            }
+            
+            if (response.errors.exchange_rate) {
+              exchangeRateField.addClass("is-invalid");
+              let errorDiv = exchangeRateField.next(".invalid-feedback");
+              if (!errorDiv.length) {
+                errorDiv = $("<div class='invalid-feedback d-block text-danger'></div>");
+                exchangeRateField.after(errorDiv);
+              }
+              errorDiv.text(response.errors.exchange_rate.join(", "));
+            } else {
+              exchangeRateField.removeClass("is-invalid");
+            }
+          }
+        } catch (e) {
+          console.error("Error parsing validation errors:", e);
+        }
+      }
+    });
 
   });
 

@@ -177,3 +177,4 @@ media/
 
 # Extras
 docs/
+.DS_Store
