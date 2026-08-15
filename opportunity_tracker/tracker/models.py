@@ -125,6 +125,7 @@ class Currency(models.Model):
     code = models.CharField(primary_key=True, max_length=3)
     currency = models.CharField(max_length=50)
     symbol = models.CharField(max_length=3, blank=True, null=True)
+    is_default = models.BooleanField(default=False)
 
     class Meta:
         db_table = "currency"
@@ -133,6 +134,12 @@ class Currency(models.Model):
 
     def __str__(self):
         return self.code
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            # Set all other currencies to false
+            Currency.objects.exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
 
 
 class GoReason(models.Model):
