@@ -423,6 +423,13 @@ class OpportunityBudget(models.Model):
         related_name="opportunity_budget"
     )
 
+    ex_currency = models.ForeignKey(
+        Currency,
+        on_delete=models.PROTECT,
+        related_name="opportunity_budget",
+        default=Currency.objects.get(is_default=True).pk
+    )
+
     ex_rate_to_default_cur = models.DecimalField(
         max_digits=12,
         decimal_places=6
