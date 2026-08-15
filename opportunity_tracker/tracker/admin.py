@@ -71,7 +71,7 @@ class UnitAdmin(ModelAdmin, ImportExportModelAdmin):
 
 @admin.register(Currency)
 class CurrencyAdmin(ModelAdmin, ImportExportModelAdmin):
-    list_display = ['code', 'currency', 'symbol']
+    list_display = ['code', 'currency', 'symbol', 'is_default']
     search_fields = ['code', 'currency']
     import_form_class = ImportForm
     export_form_class = ExportForm
