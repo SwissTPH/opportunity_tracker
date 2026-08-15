@@ -1,6 +1,6 @@
 import json
 
-from tracker.models import BudgetTemplate, BudgetTemplateColumn, BudgetTemplateRow, OpportunityBudget, OpportunityBudgetValue
+from tracker.models import BudgetTemplate, BudgetTemplateColumn, BudgetTemplateRow, Currency, OpportunityBudget, OpportunityBudgetValue
 
 
 def create_budget(opportunity, budget_payload):
@@ -10,7 +10,7 @@ def create_budget(opportunity, budget_payload):
     template = BudgetTemplate.objects.get(is_active=True)
 
     budget = OpportunityBudget.objects.create(
-        opportunity=opportunity, template=template, ex_rate_to_default_cur=payload.get("exchange_rate"))
+        opportunity=opportunity, template=template, ex_rate_to_default_cur=payload.get("exchange_rate"), ex_currency=Currency.objects.get(code=payload.get("ex_currency")))
 
     values_to_create = []
 

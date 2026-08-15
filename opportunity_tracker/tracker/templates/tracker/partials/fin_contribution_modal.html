@@ -253,8 +253,6 @@
           );
           
         $("#id_proposal_amount").val(proposalAmount);
-        $("#id_currency").val(currency.val())
-
 
         htmx.trigger("#opportunityBudgetForm", "submit");
 
@@ -264,8 +262,7 @@
           );
 
         $("#id_proposal_amount").val(proposalAmount);
-        $("#id_currency").val(currency.val())
-
+        
         $(".modal-footer button[data-bs-dismiss='modal']")
           .trigger("click");
 
