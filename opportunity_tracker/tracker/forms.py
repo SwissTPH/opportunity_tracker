@@ -413,6 +413,12 @@ class OpportunitySearchForm(forms.Form):
             'role': 'switch',
         }))
 
+    year = forms.ChoiceField(
+        choices=[],
+        required=False,
+        label="Year",
+    )
+
     def __init__(self, *args, **kwargs):
         from django.urls import reverse
         super().__init__(*args, **kwargs)
@@ -428,6 +434,18 @@ class OpportunitySearchForm(forms.Form):
                 'hx-target': '#opportunity-container',
                 'hx-trigger': 'change' if isinstance(self.fields[field_name].widget, forms.Select) or isinstance(self.fields[field_name].widget, forms.CheckboxInput) else 'keyup changed delay:500ms',
             })
+
+        years = (
+            Opportunity.objects.dates("created_at", "year", order="DESC")
+        )
+
+        self.fields['year'].choices = [
+            ("", ""),
+            *[(str(year.year), str(year.year)) for year in years],
+        ]
+
+        # Select current year by default
+        self.fields['year'].initial = str(datetime.date.today().year)
 
 
 class FundingAgencyForm(forms.ModelForm):

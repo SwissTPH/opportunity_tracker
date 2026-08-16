@@ -67,9 +67,19 @@ class OpportunityListView(ListView):
     paginate_by = 15
     form_class = OpportunitySearchForm
 
+    def get_form_data_with_defaults(self):
+        data = self.request.GET.copy()
+        initial_form = self.form_class()
+
+        for field_name, field in initial_form.fields.items():
+            if field_name not in data and field.initial not in (None, ""):
+                data[field_name] = field.initial
+
+        return data
+
     def get_queryset(self):
         opportunities = Opportunity.objects.all().order_by("-created_at")
-        form = OpportunitySearchForm(self.request.GET or None)
+        form = OpportunitySearchForm(self.get_form_data_with_defaults())
 
         # Apply filter
         if form.is_valid():
@@ -83,6 +93,7 @@ class OpportunityListView(ListView):
             is_subscribed = form.cleaned_data.get('is_subscribed', None)
             is_noncompetitive = form.cleaned_data.get(
                 'is_noncompetitive', None)
+            year = form.cleaned_data.get('year', None)
 
             if ref_no:
                 opportunities = opportunities.filter(ref_no__icontains=ref_no)
@@ -114,11 +125,14 @@ class OpportunityListView(ListView):
                 opportunities = opportunities.filter(
                     id__in=opportunity_ids)
 
+            if year:
+                opportunities = opportunities.filter(created_at__year=year)
+
         return opportunities or Opportunity.objects.none()
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context['form'] = self.form_class(self.request.GET or None)
+        context['form'] = self.form_class(self.get_form_data_with_defaults())
         context['opportunity_count'] = context['page_obj'].paginator.count
 
         return context

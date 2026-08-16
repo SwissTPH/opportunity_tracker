@@ -116,6 +116,27 @@ class OpportunityListViewTest(TestCase):
         response = self.client.get(reverse('opportunities'), {'status': '2'})
         self.assertEqual(response.context['opportunity_count'], 1)
 
+    def test_opportunity_list_view_uses_form_default_year_on_initial_load(self):
+        """Test default year from form is applied when no year is submitted."""
+        old_year = date.today().year - 1
+        Opportunity.objects.create(
+            ref_no='OPP-2023-999',
+            title='Older Opportunity',
+            opp_type='RFP',
+            created_by=self.user,
+            status=1,
+        )
+        Opportunity.objects.filter(ref_no='OPP-2023-999').update(
+            created_at=f'{old_year}-01-01T00:00:00Z'
+        )
+
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get(reverse('opportunities'))
+
+        self.assertEqual(response.context['form'].data.get(
+            'year'), str(date.today().year))
+        self.assertEqual(response.context['opportunity_count'], 19)
+
     def test_opportunity_list_view_htmx(self):
         """Test HTMX request returns partial template."""
         self.client.login(username='testuser', password='testpass123')
