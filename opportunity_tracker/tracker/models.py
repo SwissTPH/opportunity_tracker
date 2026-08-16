@@ -166,7 +166,7 @@ class NoGoReason(models.Model):
 
 class Opportunity(models.Model):
     OPP_TYPE = [("EOI", "EOI"), ("RFP", "RFP"),
-                ("FC", "Fore-cast"), ("NA", "Not Applicable")]
+                ("FC", "Fore-cast"), ("NA", "Not Applicable"), ("FA", "Framework Agreement")]
     OPP_STATUS = [
         (1, "Entered"),
         (2, "Go"),
