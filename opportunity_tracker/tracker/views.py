@@ -51,9 +51,11 @@ class IndexView(View):
 
     def get(self, request, *args, **kwargs):
         current_year = datetime.now().year
+        default_cur = Currency.objects.filter(is_default=True).first()
         context = {
             # From current year down to 2024
-            "years": range(current_year, 2023, -1)
+            "years": range(current_year, 2023, -1),
+            "default_cur": default_cur.symbol
         }
 
         return render(request, self.template_name, context=context)
