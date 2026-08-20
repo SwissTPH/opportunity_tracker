@@ -39,7 +39,17 @@ class Person(models.Model):
 
 
 class FundingAgency(Entity):
-    pass
+    AGENCY_TYPE = [
+        ("BDA", "Bilateral"),
+        ("C", "Corporate"),
+        ("F", "Foundation"),
+        ("GF", "Global Financing"),
+        ("NGO", "NGO"),
+        ("UN", "UN")
+    ]
+
+    agency_type = models.CharField(
+        max_length=3, choices=AGENCY_TYPE, blank=True, null=True)
 
     class Meta:
         db_table = "funding_agency"
