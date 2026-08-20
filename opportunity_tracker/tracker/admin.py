@@ -27,8 +27,8 @@ class OpportunitySubscriptionAdmin(ModelAdmin):
 
 @admin.register(FundingAgency)
 class FundingAgencyAdmin(ModelAdmin, ImportExportModelAdmin):
-    list_display = ['code', 'name']
-    search_fields = ['code', 'name']
+    list_display = ['code', 'name', 'agency_type']
+    search_fields = ['code', 'name', 'agency_type']
     resource_class = FundingAgencyResource
     import_form_class = ImportForm
     export_form_class = ExportForm
