@@ -24,6 +24,17 @@
         <div class="text-danger">{{form.name.errors|striptags}}</div>
         {%endif%}
       </div>
+
+      <div>
+        <div class="input-group">
+          <div class="input-group-text">Agency Type</div>
+          {{form.agency_type|add_class:"form-select"}}
+        </div>
+        {%if form.agency_type.errors%}
+        <div class="text-danger">{{form.agency_type.errors|striptags}}</div>
+        {%endif%}
+      </div>
+
       <div class="modal-footer">
         <button
           type="button"

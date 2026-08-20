@@ -451,7 +451,7 @@ class OpportunitySearchForm(forms.Form):
 class FundingAgencyForm(forms.ModelForm):
     class Meta:
         model = FundingAgency
-        fields = ["code", "name"]
+        fields = ["code", "name", "agency_type"]
 
         widgets = {
             'code': forms.TextInput(attrs={'placeholder': 'Enter code'}),
