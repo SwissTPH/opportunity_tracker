@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.utils import timezone
+from django.db.models import Count, Q
 from .pdf_processor import PDFProcessor
-from tracker.models import Opportunity
-from .forms import OpportunityFilterForm
+from tracker.models import FundingAgency, Opportunity
+from .forms import FinancialFilterForm, OpportunityFilterForm
 from .models import ReportConfig
 
 
@@ -10,13 +11,19 @@ def reports(request):
     return render(request, "reports/reports.html")
 
 
-def get_opportunities(request):
-    # Load the report config for 'opportunity' to determine field visibility
+def get_report_config(slug) -> ReportConfig:
     try:
-        report_config = ReportConfig.objects.get(slug='opportunity')
+        report_config = ReportConfig.objects.get(slug=slug)
         field_config = report_config.config or {}
     except ReportConfig.DoesNotExist:
         field_config = {}
+
+    return field_config
+
+
+def get_opportunities(request):
+    # Load the report config for 'opportunity' to determine field visibility
+    field_config = get_report_config('opportunity')
 
     form = OpportunityFilterForm(request.GET or None)
 
@@ -162,3 +169,197 @@ def get_opportunities(request):
         return response
 
     return render(request, "reports/opportunities.html", context)
+
+
+def get_financial(request):
+    # Load the report config for 'financial' to determine field visibility
+    field_config = get_report_config('financial')
+
+    form = FinancialFilterForm(request.GET or None)
+
+    # Hide fields that are not visible in the config (where value is False)
+    from django import forms
+    for field_name, is_visible in field_config.items():
+        if not is_visible and field_name in form.fields:
+            # Use HiddenInput to hide the field instead of deleting it
+            form.fields[field_name].widget = forms.HiddenInput()
+            form.fields[field_name].required = False
+
+    context = {'form': form, 'field_config': field_config}
+    subtitle = []
+
+    if form.is_valid():
+        client = form.cleaned_data.get("client", None)
+        funding_agency = form.cleaned_data.get("funding_agency", None)
+        agency_type = form.cleaned_data.get("agency_type", None)
+
+        report_date = timezone.localdate()
+        current_year = report_date.year
+        previous_year = current_year - 1
+        two_years_ago = current_year - 2
+        start_of_current_year = report_date.replace(month=1, day=1)
+
+        subtitle.append("Period: " + str(current_year))
+
+        opportunities = Opportunity.objects.filter(
+            Q(status=5) | Q(status=7)
+        ).order_by("funding_agency__agency_type")
+
+        if client:
+            opportunities = opportunities.filter(client=client)
+            subtitle.append("Client: " + client.code)
+        if funding_agency:
+            opportunities = opportunities.filter(funding_agency=funding_agency)
+            subtitle.append("Funding Agency: " + funding_agency.code)
+        if agency_type:
+            opportunities = opportunities.filter(
+                funding_agency__agency_type=agency_type)
+            agency_type_display = dict(FundingAgency.AGENCY_TYPE).get(
+                agency_type, agency_type)
+            subtitle.append("Agency Type: " + agency_type_display)
+
+        grouped_opportunities = (
+            opportunities
+            .values("funding_agency__agency_type")
+            .annotate(
+                won_previous_year=Count(
+                    "id",
+                    filter=Q(
+                        status=7,
+                        submission_date__year=two_years_ago,
+                    ),
+                ),
+                won_last_year=Count(
+                    "id",
+                    filter=Q(
+                        status=7,
+                        submission_date__year=previous_year,
+                    ),
+                ),
+                won_projection=Count(
+                    "id",
+                    filter=Q(
+                        status=7,
+                        submission_date__year=current_year,
+                    ),
+                ),
+                won_to_date=Count(
+                    "id",
+                    filter=Q(
+                        status=7,
+                        submission_date__gte=start_of_current_year,
+                        submission_date__lte=report_date,
+                    ),
+                ),
+                submitted_previous_year=Count(
+                    "id",
+                    filter=Q(
+                        status=5,
+                        submission_date__year=two_years_ago,
+                    ),
+                ),
+                submitted_last_year=Count(
+                    "id",
+                    filter=Q(
+                        status=5,
+                        submission_date__year=previous_year,
+                    ),
+                ),
+                submitted_projection=Count(
+                    "id",
+                    filter=Q(
+                        status=5,
+                        submission_date__year=current_year,
+                    ),
+                ),
+                submitted_to_date=Count(
+                    "id",
+                    filter=Q(
+                        status=5,
+                        submission_date__gte=start_of_current_year,
+                        submission_date__lte=report_date,
+                    ),
+                ),
+            )
+        )
+
+        agency_type_labels = dict(FundingAgency.AGENCY_TYPE)
+        rows = []
+        for opportunity in grouped_opportunities:
+            agency_type_value = opportunity["funding_agency__agency_type"]
+            rows.append({
+                "agency_type": agency_type_labels.get(
+                    agency_type_value, "Unknown"),
+                "won_previous_year": opportunity["won_previous_year"],
+                "won_last_year": opportunity["won_last_year"],
+                "won_projection": opportunity["won_projection"],
+                "won_to_date": opportunity["won_to_date"],
+                "submitted_previous_year": opportunity["submitted_previous_year"],
+                "submitted_last_year": opportunity["submitted_last_year"],
+                "submitted_projection": opportunity["submitted_projection"],
+                "submitted_to_date": opportunity["submitted_to_date"],
+            })
+
+        totals = opportunities.aggregate(
+            won_previous_year=Count(
+                "id",
+                filter=Q(status=7, submission_date__year=two_years_ago),
+            ),
+            won_last_year=Count(
+                "id",
+                filter=Q(status=7, submission_date__year=previous_year),
+            ),
+            won_projection=Count(
+                "id",
+                filter=Q(status=7, submission_date__year=current_year),
+            ),
+            won_to_date=Count(
+                "id",
+                filter=Q(
+                    status=7,
+                    submission_date__gte=start_of_current_year,
+                    submission_date__lte=report_date,
+                ),
+            ),
+            submitted_previous_year=Count(
+                "id",
+                filter=Q(status=5, submission_date__year=two_years_ago),
+            ),
+            submitted_last_year=Count(
+                "id",
+                filter=Q(status=5, submission_date__year=previous_year),
+            ),
+            submitted_projection=Count(
+                "id",
+                filter=Q(status=5, submission_date__year=current_year),
+            ),
+            submitted_to_date=Count(
+                "id",
+                filter=Q(
+                    status=5,
+                    submission_date__gte=start_of_current_year,
+                    submission_date__lte=report_date,
+                ),
+            ),
+        )
+        rows.append({"agency_type": "All", **totals})
+
+        context.update({
+            "current_year": current_year,
+            "previous_year": previous_year,
+            "two_years_ago": two_years_ago,
+            "report_date": report_date,
+        })
+
+        template = "reports/report_templates/financial.html"
+        response = PDFProcessor.process(
+            request,
+            template,
+            rows,
+            subtitle=" | ".join(subtitle),
+            filename="Financial.pdf",
+            context=context
+        )
+        return response
+
+    return render(request, "reports/financial.html", context)

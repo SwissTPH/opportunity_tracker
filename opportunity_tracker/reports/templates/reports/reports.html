@@ -18,11 +18,15 @@
           hx-trigger="click, load"
           >Opportunities</a
         >
-        {% comment %}
-        <a class="list-group-item list-group-item-action" href="#"
-          >Funding agencies</a
+
+        <a
+          class="list-group-item list-group-item-action"
+          role="button"
+          hx-get="{% url 'reports:financial_report' %}"
+          hx-target="#filterContainer"
+          hx-swap="innerHTML"
+          >Financial</a
         >
-        {% endcomment %}
       </div>
     </div>
   </div>

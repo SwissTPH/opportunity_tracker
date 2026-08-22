@@ -1,0 +1,52 @@
+{% load form_tags %}
+<form
+  action="{% url 'reports:financial_report' %}"
+  class="animate__animated animate__fadeIn"
+  style="animation-duration: 0.5s"
+  target="_blank"
+>
+  <div class="row g-3">
+    {% if form.status.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-3">
+      {{form.status|add_class:"form-select"}}
+      <label for="status" class="form-label">Status</label>
+      {%if form.status.errors%}
+      <div class="text-danger">{{form.status.errors|striptags}}</div>
+      {%endif%}
+    </div>
+    {%endif%}{% if form.agency_type.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-3">
+      {{form.agency_type|add_class:"form-select"}}
+      <label for="agency_type" class="form-label">Agency Type</label>
+      {%if form.agency_type.errors%}
+      <div class="text-danger">{{form.agency_type.errors|striptags}}</div>
+      {%endif%}
+    </div>
+    <div class="col-md-6"></div>
+    {% endif %} {% if form.client.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-6">
+      {{form.client|add_class:"form-select"}}
+      <label for="client" class="form-label">Client</label>
+      {%if form.client.errors%}
+      <div class="text-danger">{{form.client.errors|striptags}}</div>
+      {%endif%}
+    </div>
+    {% endif %} {% if form.funding_agency.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-6">
+      {{form.funding_agency|add_class:"form-select"}}
+      <label for="funding_agency" class="form-label">Funding Agency</label>
+      {%if form.funding_agency.errors%}
+      <div class="text-danger">{{form.funding_agency.errors|striptags}}</div>
+      {%endif%}
+    </div>
+    {% endif %}
+  </div>
+  <hr />
+  <button class="btn btn-primary float-end">
+    <span class="fa-stack">
+      <i class="fas fa-file-pdf fa-stack-2x"></i>
+      <i class="fas fa-magnifying-glass fa-stack-1x" style="top: 10%"></i>
+    </span>
+    Preview
+  </button>
+</form>
