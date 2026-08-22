@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Mapping, Tuple
 
 from tracker.workflows.registry import get_active_workflow
 from tracker.workflows.schema import get_status_id_to_slug
@@ -128,3 +128,11 @@ def get_current_status_group(opportunity) -> str:
         return ""
 
     return wf["statuses"][current_slug].get("group", "")
+
+
+def get_statuses_by_group(workflow: Mapping[str, Any], group: str) -> Dict[str, Any]:
+    return {
+        slug: spec
+        for slug, spec in workflow["statuses"].items()
+        if spec.get("group") == group
+    }

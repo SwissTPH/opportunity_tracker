@@ -1,6 +1,10 @@
 from django.shortcuts import render
 from django.utils import timezone
 from django.db.models import Count, Q
+
+from tracker.workflows.service import get_statuses_by_group
+from tracker.workflows.registry import get_active_workflow
+from tracker.workflows.schema import get_status_slug_to_id
 from .pdf_processor import PDFProcessor
 from tracker.models import FundingAgency, Opportunity
 from .forms import FinancialFilterForm, OpportunityFilterForm
@@ -203,8 +207,20 @@ def get_financial(request):
 
         # Only consider the type RFP
         opportunities = Opportunity.objects.filter(opp_type="RFP")
+
+        wf = get_active_workflow()
+        slug_to_id = get_status_slug_to_id(wf)
+
+        outcome_statuses = get_statuses_by_group(wf, "outcome")
+        report_status_ids = [
+            status["id"] for status in outcome_statuses.values()
+        ]
+        submitted_status_id = slug_to_id.get("submitted")
+        if submitted_status_id is not None:
+            report_status_ids.append(submitted_status_id)
+
         opportunities = Opportunity.objects.filter(
-            Q(status=5) | Q(status=7)
+            status__in=report_status_ids
         ).order_by("funding_agency__agency_type")
 
         if client:
