@@ -5,6 +5,7 @@
   style="animation-duration: 0.5s"
   target="_blank"
 >
+  <input type="hidden" name="preview" value="1" />
   <div class="row g-3">
     {% comment %} {% if form.status.field.widget.input_type != 'hidden' %}
     <div class="form-floating col-md-3">
@@ -27,11 +28,12 @@
     </div>
     {% endif %} {% if form.client.field.widget.input_type != 'hidden' %}
     <div class="form-floating col-md-6">
-      {{form.client|add_class:"form-select"}}
-      <label for="client" class="form-label">Client</label>
-      {%if form.client.errors%}
-      <div class="text-danger">{{form.client.errors|striptags}}</div>
-      {%endif%}
+      <div class="input-group">
+        <div class="input-group-text">Client</div>
+        {{form.client|add_class:"form-select"}} {%if form.client.errors%}
+        <div class="text-danger">{{form.client.errors|striptags}}</div>
+        {%endif%}
+      </div>
     </div>
     {% endif %} {% if form.funding_agency.field.widget.input_type != 'hidden' %}
     <div class="form-floating col-md-6">
@@ -66,7 +68,13 @@
 
     $("#id_funding_agency").select2({
       theme: "bootstrap-5",
-      placeholder: "Choose Funding Agency",
+      placeholder: "Choose Funding Agencies",
+      allowClear: true,
+    });
+
+    $("#id_client").select2({
+      theme: "bootstrap-5",
+      placeholder: "Choose Clients",
       allowClear: true,
     });
   });

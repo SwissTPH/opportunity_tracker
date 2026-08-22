@@ -38,7 +38,7 @@ def get_opportunities(request):
     context = {'form': form, 'field_config': field_config}
     subtitle = []
 
-    if form.is_valid():
+    if request.GET.get("preview") and form.is_valid():
         opp_type = form.cleaned_data.get("opp_type", None)
         status = form.cleaned_data.get("status", None)
         currency = form.cleaned_data.get("currency", None)
@@ -208,8 +208,10 @@ def get_financial(request):
         ).order_by("funding_agency__agency_type")
 
         if client:
-            opportunities = opportunities.filter(client=client)
-            subtitle.append("Client: " + client.code)
+            client = [value for value in client if value not in (None, "None")]
+            opportunities = opportunities.filter(client__in=client)
+            client_display = [c.code for c in client]
+            subtitle.append("Client: " + ", ".join(client_display))
         if funding_agency:
             funding_agency = [
                 value for value in funding_agency if value not in (None, "None")]
