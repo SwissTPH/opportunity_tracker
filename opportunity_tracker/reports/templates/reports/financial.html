@@ -35,13 +35,15 @@
     </div>
     {% endif %} {% if form.funding_agency.field.widget.input_type != 'hidden' %}
     <div class="form-floating col-md-6">
-      {{form.funding_agency|add_class:"form-select"}}
-      <label for="funding_agency" class="form-label">Funding Agency</label>
-      {%if form.funding_agency.errors%}
-      <div class="text-danger">{{form.funding_agency.errors|striptags}}</div>
-      {%endif%}
+      <div class="input-group">
+        <div class="input-group-text">Funding Agency</div>
+        {{form.funding_agency|add_class:"form-select"}} {%if
+        form.funding_agency.errors%}
+        <div class="text-danger">{{form.funding_agency.errors|striptags}}</div>
+        {%endif%}
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
   </div>
   <hr />
   <button class="btn btn-primary float-end">
@@ -59,6 +61,12 @@
     $("#id_agency_type").select2({
       theme: "bootstrap-5",
       placeholder: "Choose Agency Types",
+      allowClear: true,
+    });
+
+    $("#id_funding_agency").select2({
+      theme: "bootstrap-5",
+      placeholder: "Choose Funding Agency",
       allowClear: true,
     });
   });

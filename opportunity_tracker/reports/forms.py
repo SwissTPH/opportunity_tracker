@@ -85,8 +85,8 @@ class FinancialFilterForm(forms.Form):
 
     client = forms.ModelChoiceField(
         queryset=Client.objects.all(), empty_label="All", required=False)
-    funding_agency = forms.ModelChoiceField(
-        queryset=FundingAgency.objects.all(), empty_label="All", required=False)
+    funding_agency = forms.ModelMultipleChoiceField(
+        queryset=FundingAgency.objects.all(),  required=False)
     status = forms.ChoiceField(choices=(), required=False)
     agency_type = forms.MultipleChoiceField(
         choices=AGENCY_TYPE, required=False)

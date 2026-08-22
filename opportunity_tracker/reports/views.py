@@ -211,8 +211,14 @@ def get_financial(request):
             opportunities = opportunities.filter(client=client)
             subtitle.append("Client: " + client.code)
         if funding_agency:
-            opportunities = opportunities.filter(funding_agency=funding_agency)
-            subtitle.append("Funding Agency: " + funding_agency.code)
+            funding_agency = [
+                value for value in funding_agency if value not in (None, "None")]
+            opportunities = opportunities.filter(
+                funding_agency__in=funding_agency)
+
+            funding_agency_display = [agency.code for agency in funding_agency]
+            subtitle.append("Funding Agency: " +
+                            ", ".join(funding_agency_display))
         if agency_type:
             agency_type = [
                 value for value in agency_type if value not in (None, "None")]
