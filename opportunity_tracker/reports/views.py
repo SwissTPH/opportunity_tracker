@@ -212,15 +212,18 @@ def get_financial(request):
         slug_to_id = get_status_slug_to_id(wf)
 
         outcome_statuses = get_statuses_by_group(wf, "outcome")
-        report_status_ids = [
-            status["id"] for status in outcome_statuses.values()
+        won_status_id = slug_to_id.get("won")
+        non_won_status_ids = [
+            status["id"]
+            for slug, status in outcome_statuses.items()
+            if slug != "won"
         ]
         submitted_status_id = slug_to_id.get("submitted")
         if submitted_status_id is not None:
-            report_status_ids.append(submitted_status_id)
+            non_won_status_ids.append(submitted_status_id)
 
         opportunities = Opportunity.objects.filter(
-            status__in=report_status_ids
+            status__in=non_won_status_ids + [won_status_id]
         ).order_by("funding_agency__agency_type")
 
         if client:
@@ -258,28 +261,28 @@ def get_financial(request):
                 won_previous_year=Count(
                     "id",
                     filter=Q(
-                        status=7,
+                        status=won_status_id,
                         submission_date__year=two_years_ago,
                     ),
                 ),
                 won_last_year=Count(
                     "id",
                     filter=Q(
-                        status=7,
+                        status=won_status_id,
                         submission_date__year=previous_year,
                     ),
                 ),
                 won_projection=Count(
                     "id",
                     filter=Q(
-                        status=7,
+                        status=won_status_id,
                         submission_date__year=current_year,
                     ),
                 ),
                 won_to_date=Count(
                     "id",
                     filter=Q(
-                        status=7,
+                        status=won_status_id,
                         submission_date__gte=start_of_current_year,
                         submission_date__lte=report_date,
                     ),
@@ -287,28 +290,28 @@ def get_financial(request):
                 submitted_previous_year=Count(
                     "id",
                     filter=Q(
-                        status=5,
+                        status__in=non_won_status_ids,
                         submission_date__year=two_years_ago,
                     ),
                 ),
                 submitted_last_year=Count(
                     "id",
                     filter=Q(
-                        status=5,
+                        status__in=non_won_status_ids,
                         submission_date__year=previous_year,
                     ),
                 ),
                 submitted_projection=Count(
                     "id",
                     filter=Q(
-                        status=5,
+                        status__in=non_won_status_ids,
                         submission_date__year=current_year,
                     ),
                 ),
                 submitted_to_date=Count(
                     "id",
                     filter=Q(
-                        status=5,
+                        status__in=non_won_status_ids,
                         submission_date__gte=start_of_current_year,
                         submission_date__lte=report_date,
                     ),
@@ -336,40 +339,46 @@ def get_financial(request):
         totals = opportunities.aggregate(
             won_previous_year=Count(
                 "id",
-                filter=Q(status=7, submission_date__year=two_years_ago),
+                filter=Q(status=won_status_id,
+                         submission_date__year=two_years_ago),
             ),
             won_last_year=Count(
                 "id",
-                filter=Q(status=7, submission_date__year=previous_year),
+                filter=Q(status=won_status_id,
+                         submission_date__year=previous_year),
             ),
             won_projection=Count(
                 "id",
-                filter=Q(status=7, submission_date__year=current_year),
+                filter=Q(status=won_status_id,
+                         submission_date__year=current_year),
             ),
             won_to_date=Count(
                 "id",
                 filter=Q(
-                    status=7,
+                    status=won_status_id,
                     submission_date__gte=start_of_current_year,
                     submission_date__lte=report_date,
                 ),
             ),
             submitted_previous_year=Count(
                 "id",
-                filter=Q(status=5, submission_date__year=two_years_ago),
+                filter=Q(status__in=non_won_status_ids,
+                         submission_date__year=two_years_ago),
             ),
             submitted_last_year=Count(
                 "id",
-                filter=Q(status=5, submission_date__year=previous_year),
+                filter=Q(status__in=non_won_status_ids,
+                         submission_date__year=previous_year),
             ),
             submitted_projection=Count(
                 "id",
-                filter=Q(status=5, submission_date__year=current_year),
+                filter=Q(status__in=non_won_status_ids,
+                         submission_date__year=current_year),
             ),
             submitted_to_date=Count(
                 "id",
                 filter=Q(
-                    status=5,
+                    status__in=non_won_status_ids,
                     submission_date__gte=start_of_current_year,
                     submission_date__lte=report_date,
                 ),
