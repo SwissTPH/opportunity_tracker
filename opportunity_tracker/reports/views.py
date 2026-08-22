@@ -201,6 +201,8 @@ def get_financial(request):
 
         subtitle.append("Period: " + str(current_year))
 
+        # Only consider the type RFP
+        opportunities = Opportunity.objects.filter(opp_type="RFP")
         opportunities = Opportunity.objects.filter(
             Q(status=5) | Q(status=7)
         ).order_by("funding_agency__agency_type")
