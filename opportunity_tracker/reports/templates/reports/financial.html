@@ -6,7 +6,7 @@
   target="_blank"
 >
   <div class="row g-3">
-    {% if form.status.field.widget.input_type != 'hidden' %}
+    {% comment %} {% if form.status.field.widget.input_type != 'hidden' %}
     <div class="form-floating col-md-3">
       {{form.status|add_class:"form-select"}}
       <label for="status" class="form-label">Status</label>
@@ -14,15 +14,17 @@
       <div class="text-danger">{{form.status.errors|striptags}}</div>
       {%endif%}
     </div>
-    {%endif%}{% if form.agency_type.field.widget.input_type != 'hidden' %}
-    <div class="form-floating col-md-3">
-      {{form.agency_type|add_class:"form-select"}}
-      <label for="agency_type" class="form-label">Agency Type</label>
-      {%if form.agency_type.errors%}
-      <div class="text-danger">{{form.agency_type.errors|striptags}}</div>
-      {%endif%}
+    {%endif%} {% endcomment %} {% if form.agency_type.field.widget.input_type !=
+    'hidden' %}
+    <div class="form-floating col-md-6">
+      <div class="input-group">
+        <div class="input-group-text">Agency Type</div>
+        {{form.agency_type|add_class:"form-select"}} {%if
+        form.agency_type.errors%}
+        <div class="text-danger">{{form.agency_type.errors|striptags}}</div>
+        {%endif%}
+      </div>
     </div>
-    <div class="col-md-6"></div>
     {% endif %} {% if form.client.field.widget.input_type != 'hidden' %}
     <div class="form-floating col-md-6">
       {{form.client|add_class:"form-select"}}
@@ -50,3 +52,15 @@
     Preview
   </button>
 </form>
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    $("#id_agency_type").select2({
+      theme: "bootstrap-5",
+      placeholder: "Choose Agency Types",
+      allowClear: true,
+    });
+  });
+</script>
+{% endblock scripts %}

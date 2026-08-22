@@ -214,11 +214,18 @@ def get_financial(request):
             opportunities = opportunities.filter(funding_agency=funding_agency)
             subtitle.append("Funding Agency: " + funding_agency.code)
         if agency_type:
-            opportunities = opportunities.filter(
-                funding_agency__agency_type=agency_type)
-            agency_type_display = dict(FundingAgency.AGENCY_TYPE).get(
-                agency_type, agency_type)
-            subtitle.append("Agency Type: " + agency_type_display)
+            agency_type = [
+                value for value in agency_type if value not in (None, "None")]
+            if agency_type:
+                opportunities = opportunities.filter(
+                    funding_agency__agency_type__in=agency_type)
+                agency_type_labels = dict(FundingAgency.AGENCY_TYPE)
+                agency_type_display = [
+                    agency_type_labels.get(value, value)
+                    for value in agency_type
+                ]
+                subtitle.append("Agency Type: " +
+                                ", ".join(agency_type_display))
 
         grouped_opportunities = (
             opportunities
