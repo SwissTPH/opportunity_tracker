@@ -1,0 +1,84 @@
+{% load form_tags %}
+<form
+  action="{% url 'reports:financial_report' %}"
+  class="animate__animated animate__fadeIn"
+  style="animation-duration: 0.5s"
+  target="_blank"
+>
+  <input type="hidden" name="preview" value="1" />
+  <div class="row g-3">
+    {% if form.report_date.field.widget.input_type != 'hidden' %}
+      <div class="form-floating col-md-6">
+        {{form.report_date|add_class:"form-control"}}
+        <label for="report_date" class="form-label">Report Date</label>
+        {%if form.report_date.errors%}
+        <div class="text-danger">{{form.report_date.errors|striptags}}</div>
+        {%endif%}
+      </div>
+      {% endif %} {% if form.agency_type.field.widget.input_type !=
+    'hidden' %}
+    <div class="form-floating col-md-6">
+      <div class="input-group">
+        <div class="input-group-text">Agency Type</div>
+        {{form.agency_type|add_class:"form-select"}} {%if
+        form.agency_type.errors%}
+        <div class="text-danger">{{form.agency_type.errors|striptags}}</div>
+        {%endif%}
+      </div>
+    </div>
+    {% endif %} {% if form.client.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-6">
+      <div class="input-group">
+        <div class="input-group-text">Client</div>
+        {{form.client|add_class:"form-select"}} {%if form.client.errors%}
+        <div class="text-danger">{{form.client.errors|striptags}}</div>
+        {%endif%}
+      </div>
+    </div>
+    {% endif %} {% if form.funding_agency.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-6">
+      <div class="input-group">
+        <div class="input-group-text">Funding Agency</div>
+        {{form.funding_agency|add_class:"form-select"}} {%if
+        form.funding_agency.errors%}
+        <div class="text-danger">{{form.funding_agency.errors|striptags}}</div>
+        {%endif%}
+      </div>
+    </div>
+    {% endif %}
+    </div>
+  </div>
+
+  <hr />
+  <button class="btn btn-primary float-end">
+    <span class="fa-stack">
+      <i class="fas fa-file-pdf fa-stack-2x"></i>
+      <i class="fas fa-magnifying-glass fa-stack-1x" style="top: 10%"></i>
+    </span>
+    Preview
+  </button>
+</form>
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    $("#id_agency_type").select2({
+      theme: "bootstrap-5",
+      placeholder: "Choose Agency Types",
+      allowClear: true,
+    });
+
+    $("#id_funding_agency").select2({
+      theme: "bootstrap-5",
+      placeholder: "Choose Funding Agencies",
+      allowClear: true,
+    });
+
+    $("#id_client").select2({
+      theme: "bootstrap-5",
+      placeholder: "Choose Clients",
+      allowClear: true,
+    });
+  });
+</script>
+{% endblock scripts %}

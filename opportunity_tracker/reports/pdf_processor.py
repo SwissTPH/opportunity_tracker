@@ -6,11 +6,12 @@ from django.http import HttpResponse
 
 class PDFProcessor:
     @staticmethod
-    def process(request, template_path, data, subtitle="", footnote="", filename="report.pdf"):
+    def process(request, template_path, data, subtitle="", context=None, footnote="", filename="report.pdf"):
+        context = context or {}
         printed_date = timezone.now().strftime("%Y-%m-%d %H:%M")
         template = get_template(template_path)
         html = template.render(
-            {'data': data, 'printed_date': printed_date, 'subtitle': subtitle, 'footnote': footnote})
+            {'data': data, 'printed_date': printed_date, 'subtitle': subtitle, 'context': context, 'footnote': footnote})
 
         base_url = request.build_absolute_uri('/')
 

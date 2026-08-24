@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 
 from accounts.models import User
@@ -70,3 +72,31 @@ class OpportunityFilterForm(forms.Form):
             'first_name', 'last_name')
         self.fields['proposal_lead'].label_from_instance = lambda obj: f"{
             obj.first_name} {obj.last_name}"
+
+
+class FinancialFilterForm(forms.Form):
+    AGENCY_TYPE = [
+        (None, "All"),
+        ("BDA", "Bilateral"),
+        ("C", "Corporate"),
+        ("F", "Foundation"),
+        ("GF", "Global Financing"),
+        ("NGO", "NGO"),
+        ("UN", "UN")
+    ]
+
+    client = forms.ModelMultipleChoiceField(
+        queryset=Client.objects.all(),  required=False)
+    funding_agency = forms.ModelMultipleChoiceField(
+        queryset=FundingAgency.objects.all(),  required=False)
+    status = forms.ChoiceField(choices=(), required=False)
+    agency_type = forms.MultipleChoiceField(
+        choices=AGENCY_TYPE, required=False)
+    report_date = forms.DateField(
+        required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+
+    def __init__(self, *args, **kwargs):
+        super(FinancialFilterForm, self).__init__(*args, **kwargs)
+        self.fields['status'].choices = [
+            (None, 'All')] + Opportunity().get_valid_status_choices()
+        self.fields['report_date'].initial = datetime.date.today()
