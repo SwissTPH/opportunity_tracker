@@ -213,17 +213,16 @@ def get_financial(request):
 
         outcome_statuses = get_statuses_by_group(wf, "outcome")
         won_status_id = slug_to_id.get("won")
-        non_won_status_ids = [
+        submitted_status_ids = [
             status["id"]
-            for slug, status in outcome_statuses.items()
-            if slug != "won"
+            for status in outcome_statuses.values()
         ]
         submitted_status_id = slug_to_id.get("submitted")
         if submitted_status_id is not None:
-            non_won_status_ids.append(submitted_status_id)
+            submitted_status_ids.append(submitted_status_id)
 
         opportunities = Opportunity.objects.filter(
-            status__in=non_won_status_ids + [won_status_id]
+            status__in=submitted_status_ids
         ).order_by("funding_agency__agency_type")
 
         if client:
@@ -253,6 +252,8 @@ def get_financial(request):
                 ]
                 subtitle.append("Agency Type: " +
                                 ", ".join(agency_type_display))
+
+        project_ratio = 12.0/report_date.month
 
         grouped_opportunities = (
             opportunities
@@ -290,28 +291,28 @@ def get_financial(request):
                 submitted_previous_year=Count(
                     "id",
                     filter=Q(
-                        status__in=non_won_status_ids,
+                        status__in=submitted_status_ids,
                         submission_date__year=two_years_ago,
                     ),
                 ),
                 submitted_last_year=Count(
                     "id",
                     filter=Q(
-                        status__in=non_won_status_ids,
+                        status__in=submitted_status_ids,
                         submission_date__year=previous_year,
                     ),
                 ),
                 submitted_projection=Count(
                     "id",
                     filter=Q(
-                        status__in=non_won_status_ids,
+                        status__in=submitted_status_ids,
                         submission_date__year=current_year,
                     ),
                 ),
                 submitted_to_date=Count(
                     "id",
                     filter=Q(
-                        status__in=non_won_status_ids,
+                        status__in=submitted_status_ids,
                         submission_date__gte=start_of_current_year,
                         submission_date__lte=report_date,
                     ),
@@ -328,62 +329,28 @@ def get_financial(request):
                     agency_type_value, "Unknown"),
                 "won_previous_year": opportunity["won_previous_year"],
                 "won_last_year": opportunity["won_last_year"],
-                "won_projection": opportunity["won_projection"],
+                "won_projection": round(opportunity["won_projection"] * project_ratio),
                 "won_to_date": opportunity["won_to_date"],
                 "submitted_previous_year": opportunity["submitted_previous_year"],
                 "submitted_last_year": opportunity["submitted_last_year"],
-                "submitted_projection": opportunity["submitted_projection"],
+                "submitted_projection": round(opportunity["submitted_projection"] * project_ratio),
                 "submitted_to_date": opportunity["submitted_to_date"],
             })
 
-        totals = opportunities.aggregate(
-            won_previous_year=Count(
-                "id",
-                filter=Q(status=won_status_id,
-                         submission_date__year=two_years_ago),
-            ),
-            won_last_year=Count(
-                "id",
-                filter=Q(status=won_status_id,
-                         submission_date__year=previous_year),
-            ),
-            won_projection=Count(
-                "id",
-                filter=Q(status=won_status_id,
-                         submission_date__year=current_year),
-            ),
-            won_to_date=Count(
-                "id",
-                filter=Q(
-                    status=won_status_id,
-                    submission_date__gte=start_of_current_year,
-                    submission_date__lte=report_date,
-                ),
-            ),
-            submitted_previous_year=Count(
-                "id",
-                filter=Q(status__in=non_won_status_ids,
-                         submission_date__year=two_years_ago),
-            ),
-            submitted_last_year=Count(
-                "id",
-                filter=Q(status__in=non_won_status_ids,
-                         submission_date__year=previous_year),
-            ),
-            submitted_projection=Count(
-                "id",
-                filter=Q(status__in=non_won_status_ids,
-                         submission_date__year=current_year),
-            ),
-            submitted_to_date=Count(
-                "id",
-                filter=Q(
-                    status__in=non_won_status_ids,
-                    submission_date__gte=start_of_current_year,
-                    submission_date__lte=report_date,
-                ),
-            ),
+        total_fields = (
+            "won_previous_year",
+            "won_last_year",
+            "won_projection",
+            "won_to_date",
+            "submitted_previous_year",
+            "submitted_last_year",
+            "submitted_projection",
+            "submitted_to_date",
         )
+        totals = {
+            field: sum(row[field] for row in rows)
+            for field in total_fields
+        }
         rows.append({"agency_type": "All", **totals})
 
         context.update({
