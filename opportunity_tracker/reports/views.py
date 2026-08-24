@@ -196,14 +196,15 @@ def get_financial(request):
         client = form.cleaned_data.get("client", None)
         funding_agency = form.cleaned_data.get("funding_agency", None)
         agency_type = form.cleaned_data.get("agency_type", None)
+        report_date = form.cleaned_data.get(
+            "report_date", timezone.localdate())
 
-        report_date = timezone.localdate()
         current_year = report_date.year
         previous_year = current_year - 1
         two_years_ago = current_year - 2
         start_of_current_year = report_date.replace(month=1, day=1)
 
-        subtitle.append("Period: " + str(current_year))
+        subtitle.append("Reporting Date: " + report_date.strftime("%d.%m.%Y"))
 
         # Only consider the type RFP
         opportunities = Opportunity.objects.filter(opp_type="RFP")
@@ -273,13 +274,6 @@ def get_financial(request):
                         submission_date__year=previous_year,
                     ),
                 ),
-                won_projection=Count(
-                    "id",
-                    filter=Q(
-                        status=won_status_id,
-                        submission_date__year=current_year,
-                    ),
-                ),
                 won_to_date=Count(
                     "id",
                     filter=Q(
@@ -302,13 +296,6 @@ def get_financial(request):
                         submission_date__year=previous_year,
                     ),
                 ),
-                submitted_projection=Count(
-                    "id",
-                    filter=Q(
-                        status__in=submitted_status_ids,
-                        submission_date__year=current_year,
-                    ),
-                ),
                 submitted_to_date=Count(
                     "id",
                     filter=Q(
@@ -329,11 +316,11 @@ def get_financial(request):
                     agency_type_value, "Unknown"),
                 "won_previous_year": opportunity["won_previous_year"],
                 "won_last_year": opportunity["won_last_year"],
-                "won_projection": round(opportunity["won_projection"] * project_ratio),
+                "won_projection": round(opportunity["won_to_date"] * project_ratio),
                 "won_to_date": opportunity["won_to_date"],
                 "submitted_previous_year": opportunity["submitted_previous_year"],
                 "submitted_last_year": opportunity["submitted_last_year"],
-                "submitted_projection": round(opportunity["submitted_projection"] * project_ratio),
+                "submitted_projection": round(opportunity["submitted_to_date"] * project_ratio),
                 "submitted_to_date": opportunity["submitted_to_date"],
             })
 

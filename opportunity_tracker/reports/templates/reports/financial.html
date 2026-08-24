@@ -7,15 +7,15 @@
 >
   <input type="hidden" name="preview" value="1" />
   <div class="row g-3">
-    {% comment %} {% if form.status.field.widget.input_type != 'hidden' %}
-    <div class="form-floating col-md-3">
-      {{form.status|add_class:"form-select"}}
-      <label for="status" class="form-label">Status</label>
-      {%if form.status.errors%}
-      <div class="text-danger">{{form.status.errors|striptags}}</div>
-      {%endif%}
-    </div>
-    {%endif%} {% endcomment %} {% if form.agency_type.field.widget.input_type !=
+    {% if form.report_date.field.widget.input_type != 'hidden' %}
+      <div class="form-floating col-md-6">
+        {{form.report_date|add_class:"form-control"}}
+        <label for="report_date" class="form-label">Report Date</label>
+        {%if form.report_date.errors%}
+        <div class="text-danger">{{form.report_date.errors|striptags}}</div>
+        {%endif%}
+      </div>
+      {% endif %} {% if form.agency_type.field.widget.input_type !=
     'hidden' %}
     <div class="form-floating col-md-6">
       <div class="input-group">
@@ -44,9 +44,11 @@
         <div class="text-danger">{{form.funding_agency.errors|striptags}}</div>
         {%endif%}
       </div>
-      {% endif %}
+    </div>
+    {% endif %}
     </div>
   </div>
+
   <hr />
   <button class="btn btn-primary float-end">
     <span class="fa-stack">

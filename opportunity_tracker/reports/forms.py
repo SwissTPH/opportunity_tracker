@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 
 from accounts.models import User
@@ -90,8 +92,11 @@ class FinancialFilterForm(forms.Form):
     status = forms.ChoiceField(choices=(), required=False)
     agency_type = forms.MultipleChoiceField(
         choices=AGENCY_TYPE, required=False)
+    report_date = forms.DateField(
+        required=True, widget=forms.DateInput(attrs={'type': 'date'}))
 
     def __init__(self, *args, **kwargs):
         super(FinancialFilterForm, self).__init__(*args, **kwargs)
         self.fields['status'].choices = [
             (None, 'All')] + Opportunity().get_valid_status_choices()
+        self.fields['report_date'].initial = datetime.date.today()
