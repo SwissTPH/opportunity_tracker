@@ -389,7 +389,16 @@ def get_rational(request):
         reason_field = "go_reasons" if rational == "go" else "nogo_reasons"
         reason_name = f"{reason_field}__reason"
 
-        opportunities = Opportunity.objects.all()
+        # Start filtering
+        wf = get_active_workflow()
+        slug_to_id = get_status_slug_to_id(wf)
+        nogo_id = slug_to_id.get("no_go")
+
+        if rational == "go":
+            opportunities = Opportunity.objects.exclude(status=nogo_id)
+        else:
+            opportunities = Opportunity.objects.filter(status=nogo_id)
+
         if from_date:
             opportunities = opportunities.filter(
                 created_at__date__gte=from_date)
