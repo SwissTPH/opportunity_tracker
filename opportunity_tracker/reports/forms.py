@@ -3,7 +3,7 @@ import datetime
 from django import forms
 
 from accounts.models import User
-from tracker.models import Client, FundingAgency, Unit, Institute, Currency, Opportunity
+from tracker.models import Client, FundingAgency, GoReason, NoGoReason, Unit, Institute, Currency, Opportunity
 
 
 class OpportunityFilterForm(forms.Form):
@@ -100,3 +100,22 @@ class FinancialFilterForm(forms.Form):
         self.fields['status'].choices = [
             (None, 'All')] + Opportunity().get_valid_status_choices()
         self.fields['report_date'].initial = datetime.date.today()
+
+
+class RationalFilterForm(forms.Form):
+    RATIONAL = [
+        ("go", "GO"),
+        ("nogo", "NO GO"),
+    ]
+    rational = forms.ChoiceField(choices=RATIONAL, required=True)
+    from_date = forms.DateField(
+        required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    to_date = forms.DateField(
+        required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+
+    go_reasons = forms.ModelMultipleChoiceField(
+        queryset=GoReason.objects.all(), required=False
+    )
+    nogo_reasons = forms.ModelMultipleChoiceField(
+        queryset=NoGoReason.objects.all(), required=False
+    )

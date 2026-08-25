@@ -7,7 +7,7 @@ from tracker.workflows.registry import get_active_workflow
 from tracker.workflows.schema import get_status_slug_to_id
 from .pdf_processor import PDFProcessor
 from tracker.models import FundingAgency, Opportunity
-from .forms import FinancialFilterForm, OpportunityFilterForm
+from .forms import FinancialFilterForm, OpportunityFilterForm, RationalFilterForm
 from .models import ReportConfig
 
 
@@ -359,3 +359,88 @@ def get_financial(request):
         return response
 
     return render(request, "reports/financial.html", context)
+
+
+def get_rational(request):
+    # Load the report config for 'rational' to determine field visibility
+    field_config = get_report_config('rational')
+
+    form = RationalFilterForm(request.GET or None)
+
+    # Hide fields that are not visible in the config (where value is False)
+    from django import forms
+    for field_name, is_visible in field_config.items():
+        if not is_visible and field_name in form.fields:
+            # Use HiddenInput to hide the field instead of deleting it
+            form.fields[field_name].widget = forms.HiddenInput()
+            form.fields[field_name].required = False
+
+    context = {'form': form, 'field_config': field_config}
+    subtitle = []
+
+    if request.GET.get("preview") and form.is_valid():
+        rational = form.cleaned_data["rational"]
+        from_date = form.cleaned_data.get("from_date")
+        to_date = form.cleaned_data.get("to_date")
+        selected_reasons = form.cleaned_data.get(
+            "go_reasons" if rational == "go" else "nogo_reasons"
+        )
+
+        reason_field = "go_reasons" if rational == "go" else "nogo_reasons"
+        reason_name = f"{reason_field}__reason"
+
+        # Start filtering
+        wf = get_active_workflow()
+        slug_to_id = get_status_slug_to_id(wf)
+        nogo_id = slug_to_id.get("no_go")
+
+        if rational == "go":
+            opportunities = Opportunity.objects.exclude(status=nogo_id)
+        else:
+            opportunities = Opportunity.objects.filter(status=nogo_id)
+
+        if from_date:
+            opportunities = opportunities.filter(
+                created_at__date__gte=from_date)
+            subtitle.append("From: " + from_date.strftime("%d.%m.%Y"))
+        if to_date:
+            opportunities = opportunities.filter(created_at__date__lte=to_date)
+            subtitle.append("To: " + to_date.strftime("%d.%m.%Y"))
+        if selected_reasons:
+            opportunities = opportunities.filter(
+                **{f"{reason_field}__in": selected_reasons}
+            )
+            subtitle.append("Reasons: " + ", ".join(str(reason)
+                            for reason in selected_reasons))
+
+        grouped_reasons = (
+            opportunities
+            .values(reason_name)
+            .annotate(number=Count("id", distinct=True))
+            .order_by("-number", reason_name)
+        )
+        total = sum(row["number"] for row in grouped_reasons)
+        rows = [
+            {
+                "reason": row[reason_name],
+                "number": row["number"],
+                "percentage": round(row["number"] * 100 / total) if total else 0,
+            }
+            for row in grouped_reasons
+        ]
+        rows.append({"reason": "Total", "number": total, "percentage": 100})
+
+        context.update({
+            "rational_label": "GOs" if rational == "go" else "NO-GOs",
+            "report_year": (to_date or timezone.localdate()).year,
+        })
+        return PDFProcessor.process(
+            request,
+            "reports/report_templates/rational.html",
+            rows,
+            subtitle=" | ".join(subtitle),
+            filename="Rational.pdf",
+            context=context,
+        )
+
+    return render(request, "reports/rational.html", context)

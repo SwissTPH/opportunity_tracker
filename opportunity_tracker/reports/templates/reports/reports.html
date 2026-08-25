@@ -27,6 +27,15 @@
           hx-swap="innerHTML"
           >Financial</a
         >
+
+        <a
+          class="list-group-item list-group-item-action"
+          role="button"
+          hx-get="{% url 'reports:rational_report' %}"
+          hx-target="#filterContainer"
+          hx-swap="innerHTML"
+          >Rational</a
+        >
       </div>
     </div>
   </div>
