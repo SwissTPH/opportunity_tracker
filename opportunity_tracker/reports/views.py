@@ -7,7 +7,7 @@ from tracker.workflows.registry import get_active_workflow
 from tracker.workflows.schema import get_status_slug_to_id
 from .pdf_processor import PDFProcessor
 from tracker.models import FundingAgency, Opportunity
-from .forms import FinancialFilterForm, OpportunityFilterForm
+from .forms import FinancialFilterForm, OpportunityFilterForm, RationalFilterForm
 from .models import ReportConfig
 
 
@@ -359,3 +359,23 @@ def get_financial(request):
         return response
 
     return render(request, "reports/financial.html", context)
+
+
+def get_rational(request):
+    # Load the report config for 'rational' to determine field visibility
+    field_config = get_report_config('rational')
+
+    form = RationalFilterForm(request.GET or None)
+
+    # Hide fields that are not visible in the config (where value is False)
+    from django import forms
+    for field_name, is_visible in field_config.items():
+        if not is_visible and field_name in form.fields:
+            # Use HiddenInput to hide the field instead of deleting it
+            form.fields[field_name].widget = forms.HiddenInput()
+            form.fields[field_name].required = False
+
+    context = {'form': form, 'field_config': field_config}
+    subtitle = []
+
+    return render(request, "reports/rational.html", context)

@@ -1,0 +1,97 @@
+{% load form_tags %}
+<form
+  action="{% url 'reports:financial_report' %}"
+  class="animate__animated animate__fadeIn"
+  style="animation-duration: 0.5s"
+  target="_blank"
+>
+  <input type="hidden" name="preview" value="1" />
+  <div class="row g-3">
+    {% if form.rational.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-6">
+      <div class="input-group">
+        <div class="input-group-text">Rational</div>
+        {{form.rational|add_class:"form-select"}} {%if form.rational.errors%}
+        <div class="text-danger">{{form.rational.errors|striptags}}</div>
+        {%endif%}
+      </div>
+    </div>
+    {% endif %} {% if form.go_reasons.field.widget.input_type != 'hidden' %}
+    <div id="go-reasons-container" class="form-floating col-md-6" hidden>
+      <div class="input-group">
+        <div class="input-group-text">Reasons</div>
+        {{form.go_reasons|add_class:"form-select"}} {%if
+        form.go_reasons.errors%}
+        <div class="text-danger">{{form.go_reasons.errors|striptags}}</div>
+        {%endif%}
+      </div>
+    </div>
+    {% endif %} {% if form.nogo_reasons.field.widget.input_type != 'hidden' %}
+    <div id="nogo-reasons-container" class="form-floating col-md-6" hidden>
+      <div class="input-group">
+        <div class="input-group-text">Reasons</div>
+        {{form.nogo_reasons|add_class:"form-select"}} {%if
+        form.nogo_reasons.errors%}
+        <div class="text-danger">{{form.nogo_reasons.errors|striptags}}</div>
+        {%endif%}
+      </div>
+    </div>
+    {% endif %} {% if form.from_date.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-6">
+      {{form.from_date|add_class:"form-control"}}
+      <label for="from_date" class="form-label">Date From</label>
+      {%if form.from_date.errors%}
+      <div class="text-danger">{{form.from_date.errors|striptags}}</div>
+      {%endif%}
+    </div>
+    {% endif %} {% if form.to_date.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-6">
+      {{form.to_date|add_class:"form-control"}}
+      <label for="to_date" class="form-label">Date To</label>
+      {%if form.to_date.errors%}
+      <div class="text-danger">{{form.to_date.errors|striptags}}</div>
+      {%endif%}
+    </div>
+    {% endif %}
+  </div>
+
+  <hr />
+  <button class="btn btn-primary float-end">
+    <span class="fa-stack">
+      <i class="fas fa-file-pdf fa-stack-2x"></i>
+      <i class="fas fa-magnifying-glass fa-stack-1x" style="top: 10%"></i>
+    </span>
+    Preview
+  </button>
+</form>
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    $("#id_go_reasons, #id_nogo_reasons").select2({
+      theme: "bootstrap-5",
+      placeholder: "Choose reasons",
+      allowClear: true,
+    });
+
+    function toggleReasonFields() {
+      const rational = $("#id_rational").val();
+      const showGoReasons = rational === "go";
+      const showNoGoReasons = rational === "nogo";
+
+      $("#go-reasons-container").prop("hidden", !showGoReasons);
+      $("#nogo-reasons-container").prop("hidden", !showNoGoReasons);
+
+      if (!showGoReasons) {
+        $("#id_go_reasons").val(null).trigger("change");
+      }
+      if (!showNoGoReasons) {
+        $("#id_nogo_reasons").val(null).trigger("change");
+      }
+    }
+
+    $("#id_rational").on("change", toggleReasonFields);
+    toggleReasonFields();
+  });
+</script>
+{% endblock scripts %}
