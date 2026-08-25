@@ -1,0 +1,43 @@
+{% extends "reports/base_report.html" %}
+{% block title %}Rational Report{% endblock title %}
+{% block page_style %}
+  {% include "reports/page_portrait.css" %}
+  {% load l10n %}
+{% endblock page_style %}
+{% block style %}
+  .total-row td {
+    font-weight: bold;
+  }
+{% endblock style %}
+{% block content %}
+<h1>
+  Analysis of Rational for {{ context.rational_label }} {{ context.report_year|unlocalize }}
+  <hr />
+  <small
+    style="font-size: small; font-weight: 600; color: #777; display: block; text-align: left;"
+  >{{ subtitle }}</small>
+</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Reason</th>
+      <th>Number</th>
+      <th>% of Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in data %}
+    <tr{% if row.reason == "Total" %} class="total-row"{% endif %}>
+      <td>{{ row.reason }}</td>
+      <td>{{ row.number }}</td>
+      <td>{{ row.percentage }}%</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="3" style="text-align: center">No rational data found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock content %}

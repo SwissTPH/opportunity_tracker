@@ -378,4 +378,60 @@ def get_rational(request):
     context = {'form': form, 'field_config': field_config}
     subtitle = []
 
+    if request.GET.get("preview") and form.is_valid():
+        rational = form.cleaned_data["rational"]
+        from_date = form.cleaned_data.get("from_date")
+        to_date = form.cleaned_data.get("to_date")
+        selected_reasons = form.cleaned_data.get(
+            "go_reasons" if rational == "go" else "nogo_reasons"
+        )
+
+        reason_field = "go_reasons" if rational == "go" else "nogo_reasons"
+        reason_name = f"{reason_field}__reason"
+
+        opportunities = Opportunity.objects.all()
+        if from_date:
+            opportunities = opportunities.filter(
+                created_at__date__gte=from_date)
+            subtitle.append("From: " + from_date.strftime("%d.%m.%Y"))
+        if to_date:
+            opportunities = opportunities.filter(created_at__date__lte=to_date)
+            subtitle.append("To: " + to_date.strftime("%d.%m.%Y"))
+        if selected_reasons:
+            opportunities = opportunities.filter(
+                **{f"{reason_field}__in": selected_reasons}
+            )
+            subtitle.append("Reasons: " + ", ".join(str(reason)
+                            for reason in selected_reasons))
+
+        grouped_reasons = (
+            opportunities
+            .values(reason_name)
+            .annotate(number=Count("id", distinct=True))
+            .order_by("-number", reason_name)
+        )
+        total = sum(row["number"] for row in grouped_reasons)
+        rows = [
+            {
+                "reason": row[reason_name],
+                "number": row["number"],
+                "percentage": round(row["number"] * 100 / total) if total else 0,
+            }
+            for row in grouped_reasons
+        ]
+        rows.append({"reason": "Total", "number": total, "percentage": 100})
+
+        context.update({
+            "rational_label": "GOs" if rational == "go" else "NO-GOs",
+            "report_year": (to_date or timezone.localdate()).year,
+        })
+        return PDFProcessor.process(
+            request,
+            "reports/report_templates/rational.html",
+            rows,
+            subtitle=" | ".join(subtitle),
+            filename="Rational.pdf",
+            context=context,
+        )
+
     return render(request, "reports/rational.html", context)
