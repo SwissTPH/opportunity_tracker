@@ -37,6 +37,7 @@
       <th>Submitted</th>
       <th>Lead Unit</th>
       <th>Lead Organization</th>
+      <th>Amount</th>
       <th>Status</th>
     </tr>
   </thead>
@@ -55,11 +56,12 @@
       <td>{{ opportunity.ref_no }}</td>
       <td>{{ opportunity.title }}</td>
       <td>{{ opportunity.funding_agency }}</td>
-      <td>{{ opportunity.client }}</td>
+      <td>{{ opportunity.client|default:"" }}</td>
       <td>{{ opportunity.opp_type}}</td>
       <td>{{ opportunity.submission_date|date:"d.m.y" }}</td>
       <td>{{ opportunity.lead_unit.code}}</td>
       <td>{{ opportunity.lead_institute.code}}</td>
+      <td>{{ opportunity.proposal_amount|default:"" }}</td>
       <td>{{ opportunity.get_status_display }}</td>
     </tr>
     {% empty %}
