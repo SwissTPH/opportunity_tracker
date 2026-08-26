@@ -173,6 +173,11 @@ class UpdateOpportunityForm(forms.ModelForm):
         is_subscribed = kwargs.pop("is_subscribed", False)
         super().__init__(*args, **kwargs)
 
+        if not self.instance.currency:
+            default_currency = Currency.objects.filter(is_default=True).first()
+            if default_currency:
+                self.initial['currency'] = default_currency
+
         self.fields['proposal_lead'].queryset = User.objects.all()
         self.fields['proposal_lead'].label_from_instance = lambda obj: f"{obj.first_name} {
             obj.last_name}" if obj.first_name and obj.last_name else obj.username
