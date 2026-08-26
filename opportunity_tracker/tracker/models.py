@@ -93,6 +93,7 @@ class Institute(Entity):
     class Meta:
         db_table = "institute"
         ordering = ["name"]
+        verbose_name = "Partner Institute"
 
 
 class Unit(Entity):
