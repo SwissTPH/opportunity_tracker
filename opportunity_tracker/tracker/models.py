@@ -438,7 +438,6 @@ class OpportunityBudget(models.Model):
         Currency,
         on_delete=models.PROTECT,
         related_name="opportunity_budget",
-        default=Currency.objects.get(is_default=True).pk
     )
 
     ex_rate_to_default_cur = models.DecimalField(
