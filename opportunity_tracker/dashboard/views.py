@@ -81,7 +81,7 @@ class DashboardDataView(TemplateView):
             "top5_duration_won_labels": top5_duration_won_labels,
             "top5_duration_won_data": top5_duration_won_data,
             "top5_duration_submitted_labels": top5_duration_submitted_labels,
-            "top5_duration_submitted_data": top5_duration_submitted_data
+            "top5_duration_submitted_data": top5_duration_submitted_data,
         })
 
     def get_status_overview(self, period):
@@ -262,3 +262,18 @@ def get_total_won_amount(request):
                                         )))
 
     return HttpResponse(result["total_submitted_amount"] or 0)
+
+
+def get_won_to_lost_rfp(request):
+    year = request.GET.get("year", now().year)
+    opportunities = Opportunity.objects.filter(
+        submission_date__year=year,
+        opp_type="RFP",
+        status__in=[6, 7],
+    )
+    counts = opportunities.values("status").annotate(count=Count("id"))
+    status_counts = {record["status"]: record["count"] for record in counts}
+    lost_count = status_counts.get(6, 0)
+    ratio = status_counts.get(7, 0) / lost_count if lost_count else 0
+
+    return HttpResponse(ratio * 100)

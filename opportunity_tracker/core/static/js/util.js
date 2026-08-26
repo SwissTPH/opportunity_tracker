@@ -47,7 +47,7 @@ function applyOpacityToPalette(palette, opacity) {
 }
 
 // Animate numbers
-function animateNumbers(element, value) {
+function animateNumbers(element, value, prefix = "", suffix = "") {
   // Ensure the element starts with a counter property initialized to 0
   $(element)
     .prop("counter", 0)
@@ -58,12 +58,14 @@ function animateNumbers(element, value) {
         easing: "swing", // Easing effect
         step: function (now) {
           // Update the number displayed during the animation
-          $(element).text(Math.floor(now).toLocaleString());
+          $(element).text(
+            `${prefix}${Math.floor(now).toLocaleString()}${suffix}`,
+          );
         },
         complete: function () {
           // Ensure the final value is set correctly after animation
-          $(element).text(value.toLocaleString());
+          $(element).text(`${prefix}${value.toLocaleString()}${suffix}`);
         },
-      }
+      },
     );
 }
