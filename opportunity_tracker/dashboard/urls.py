@@ -1,5 +1,5 @@
 from django.urls import path
-from dashboard.views import DashboardDataView, get_total_opportunity_count, get_total_submitted_amount, get_total_won_amount
+from dashboard.views import DashboardDataView, get_total_opportunity_count, get_total_submitted_amount, get_total_won_amount, get_won_to_lost_rfp
 
 app_name = 'dashboard'
 
@@ -12,4 +12,5 @@ urlpatterns = [
          get_total_submitted_amount, name="total_submitted_amount"),
     path("total_won_amount/",
          get_total_won_amount, name="total_won_amount"),
+    path("won_to_lost_rfp/", get_won_to_lost_rfp, name="won_to_lost_rfp")
 ]

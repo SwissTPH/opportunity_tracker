@@ -42,14 +42,17 @@
       <div class="p-3">
         <div class="row justify-content-center" >
 
-          <div class="col-md-4">
+          <div class="col-md-3">
             <c-number_card id="totalOpportunities" title="Total Opportunities Captured in {% now "Y" %}" value="0" url="{% url 'dashboard:total_opportunity_count' %}"></c-number_card>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <c-number_card id="totalWonProposalAmount" title="Total Won Amount in {% now "Y" %} in {{default_cur}}" value="0" url="{% url "dashboard:total_won_amount" %}"></c-number_card>
           </div>
-          <div class="col-md-4">
-            <c-number_card id="totalSubmittedProposalAmount" title="Total Submitted Amount in {% now "Y" %} in {{default_cur}}" value="0"  url="{% url "dashboard:total_submitted_amount" %}"></c-number_card>
+          <div class="col-md-3">
+            <c-number_card id="totalSubmittedProposalAmount" title="Total Submitted Amount in {% now "Y" %} in {{default_cur}}" value="0" url="{% url "dashboard:total_submitted_amount" %}"></c-number_card>
+          </div>
+          <div class="col-md-3">
+            <c-number_card id="wonToLost" title="Won to Lost Ratio in {% now "Y" %}" value="0" suffix="%" url="{% url "dashboard:won_to_lost_rfp" %}"></c-number_card>
           </div>
         </div>
 
