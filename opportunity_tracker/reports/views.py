@@ -6,7 +6,7 @@ from tracker.workflows.service import get_statuses_by_group
 from tracker.workflows.registry import get_active_workflow
 from tracker.workflows.schema import get_status_slug_to_id
 from .pdf_processor import PDFProcessor
-from tracker.models import FundingAgency, Opportunity
+from tracker.models import FundingAgency, GoReason, NoGoReason, Opportunity
 from .forms import FinancialFilterForm, OpportunityFilterForm, RationalFilterForm
 from .models import ReportConfig
 
@@ -387,7 +387,6 @@ def get_rational(request):
         )
 
         reason_field = "go_reasons" if rational == "go" else "nogo_reasons"
-        reason_name = f"{reason_field}__reason"
 
         # Start filtering
         wf = get_active_workflow()
@@ -413,18 +412,37 @@ def get_rational(request):
             subtitle.append("Reasons: " + ", ".join(str(reason)
                             for reason in selected_reasons))
 
-        grouped_reasons = (
-            opportunities
-            .values(reason_name)
-            .annotate(number=Count("id", distinct=True))
-            .order_by("-number", reason_name)
+        reason_model = GoReason if rational == "go" else NoGoReason
+        reason_queryset = reason_model.objects.all()
+        if selected_reasons:
+            reason_queryset = reason_queryset.filter(pk__in=selected_reasons)
+
+        opportunity_relation = (
+            "opportunitygoreason"
+            if rational == "go"
+            else "opportunitynogoreason"
         )
-        total = sum(row["number"] for row in grouped_reasons)
+        grouped_reasons = (
+            reason_queryset
+            .annotate(
+                number=Count(
+                    f"{opportunity_relation}__opportunity",
+                    filter=Q(
+                        **{
+                            f"{opportunity_relation}__opportunity__in": opportunities
+                        }
+                    ),
+                    distinct=True,
+                )
+            )
+            .order_by("-number", "reason")
+        )
+        total = sum(row.number for row in grouped_reasons)
         rows = [
             {
-                "reason": row[reason_name],
-                "number": row["number"],
-                "percentage": round(row["number"] * 100 / total) if total else 0,
+                "reason": row.reason,
+                "number": row.number,
+                "percentage": round(row.number * 100 / total) if total else 0,
             }
             for row in grouped_reasons
         ]
