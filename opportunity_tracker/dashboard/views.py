@@ -263,7 +263,7 @@ def get_total_submitted_amount(request):
     if submitted_status_id is not None:
         submitted_status_ids.append(submitted_status_id)
 
-    result = Opportunity.objects.filter(created_at__year=year).aggregate(
+    result = Opportunity.objects.filter(submission_date__year=year).aggregate(
         total_submitted_amount=Sum(Case(When(status__in=submitted_status_ids, then="proposal_amount"),
                                    default=0,
                                    output_field=IntegerField(),
