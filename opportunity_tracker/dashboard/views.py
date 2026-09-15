@@ -5,6 +5,9 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.utils.timezone import now
 from django.views.generic import TemplateView
 
+from tracker.workflows.service import get_statuses_by_group
+from tracker.workflows.registry import get_active_workflow
+from tracker.workflows.schema import get_status_slug_to_id
 from tracker.models import Opportunity
 
 
@@ -244,8 +247,24 @@ def get_total_opportunity_count(request):
 
 def get_total_submitted_amount(request):
     year = request.GET.get("year", now().year)
+
+    wf = get_active_workflow()
+    slug_to_id = get_status_slug_to_id(wf)
+
+    outcome_statuses = get_statuses_by_group(wf, "outcome")
+
+    won_status_id = slug_to_id.get("won")
+    submitted_status_ids = [
+        status["id"]
+        for status in outcome_statuses.values()
+    ]
+    submitted_status_id = slug_to_id.get("submitted")
+
+    if submitted_status_id is not None:
+        submitted_status_ids.append(submitted_status_id)
+
     result = Opportunity.objects.filter(created_at__year=year).aggregate(
-        total_submitted_amount=Sum(Case(When(status=5, then="proposal_amount"),
+        total_submitted_amount=Sum(Case(When(status__in=submitted_status_ids, then="proposal_amount"),
                                    default=0,
                                    output_field=IntegerField(),
                                         )))
