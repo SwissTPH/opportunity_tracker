@@ -45,6 +45,7 @@
             Donor: <strong>{{ opportunity.funding_agency.name }}</strong><br />
             Type: {{ opportunity.get_opp_type_display }}<br />
             Posted on: {{ opportunity.created_at|date:"F j, Y" }}<br />
+            Due on: {{ opportunity.due_date|date:"F j, Y" }}<br />
             Countries: {{ opportunity.countries.all|join:", " }}
           </p>
         </div>
