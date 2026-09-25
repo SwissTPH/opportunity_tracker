@@ -217,8 +217,6 @@ def get_financial(request):
         subtitle.append("Reporting Date: " + report_date.strftime("%d.%m.%Y"))
 
         # Only consider the type RFP
-        opportunities = Opportunity.objects.filter(opp_type="RFP")
-
         wf = get_active_workflow()
         slug_to_id = get_status_slug_to_id(wf)
 
@@ -233,7 +231,8 @@ def get_financial(request):
             submitted_status_ids.append(submitted_status_id)
 
         opportunities = Opportunity.objects.filter(
-            status__in=submitted_status_ids
+            opp_type="RFP",
+            status__in=submitted_status_ids,
         ).order_by("funding_agency__agency_type")
 
         if client:
