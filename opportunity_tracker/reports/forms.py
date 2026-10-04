@@ -106,6 +106,13 @@ class FinancialFilterForm(forms.Form):
         ("NGO", "NGO"),
         ("UN", "UN")
     ]
+    CLIENT_TYPE = [
+        ("BDA", "Bilateral Donor Agency"),
+        ("DB", "Development Bank"),
+        ("F", "Foundation, Philanthropic"),
+        ("GHI", "Global Health Initiative"),
+        ("O", "Other")
+    ]
 
     client = forms.ModelMultipleChoiceField(
         queryset=Client.objects.all(),  required=False)
@@ -116,6 +123,8 @@ class FinancialFilterForm(forms.Form):
         choices=AGENCY_TYPE, required=False)
     report_date = forms.DateField(
         required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+    client_type = forms.MultipleChoiceField(
+        choices=CLIENT_TYPE, required=False)
 
     def __init__(self, *args, **kwargs):
         super(FinancialFilterForm, self).__init__(*args, **kwargs)

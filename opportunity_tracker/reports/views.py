@@ -237,6 +237,7 @@ def get_financial(request):
         client = form.cleaned_data.get("client", None)
         funding_agency = form.cleaned_data.get("funding_agency", None)
         agency_type = form.cleaned_data.get("agency_type", None)
+        client_type = form.cleaned_data.get("client_type", None)
         report_date = form.cleaned_data.get(
             "report_date", timezone.localdate())
 
@@ -293,6 +294,20 @@ def get_financial(request):
                 ]
                 subtitle.append("Agency Type: " +
                                 ", ".join(agency_type_display))
+
+        if client_type:
+            client_type = [
+                value for value in client_type if value not in (None, "None")]
+            if client_type:
+                opportunities = opportunities.filter(
+                    client__client_type__in=client_type)
+                client_type_labels = dict(Client.CLIENT_TYPE)
+                client_display = [
+                    client_type_labels.get(value, value)
+                    for value in client_type
+                ]
+                subtitle.append("Client Types: " +
+                                ", ".join(client_display))
 
         project_ratio = 12.0/report_date.month
 

@@ -15,6 +15,7 @@
         <div class="text-danger">{{form.report_date.errors|striptags}}</div>
         {%endif%}
       </div>
+      <div class="col-md-6"></div>
       {% endif %} {% if form.agency_type.field.widget.input_type !=
     'hidden' %}
     <div class="form-floating col-md-6">
@@ -23,15 +24,6 @@
         {{form.agency_type|add_class:"form-select"}} {%if
         form.agency_type.errors%}
         <div class="text-danger">{{form.agency_type.errors|striptags}}</div>
-        {%endif%}
-      </div>
-    </div>
-    {% endif %} {% if form.client.field.widget.input_type != 'hidden' %}
-    <div class="form-floating col-md-6">
-      <div class="input-group">
-        <div class="input-group-text">Client</div>
-        {{form.client|add_class:"form-select"}} {%if form.client.errors%}
-        <div class="text-danger">{{form.client.errors|striptags}}</div>
         {%endif%}
       </div>
     </div>
@@ -46,6 +38,27 @@
       </div>
     </div>
     {% endif %}
+    {% if form.client_type.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-6">
+      <div class="input-group">
+        <div class="input-group-text">Client Type</div>
+        {{form.client_type|add_class:"form-select"}} {%if
+        form.client_type.errors%}
+        <div class="text-danger">{{form.client_type.errors|striptags}}</div>
+        {%endif%}
+      </div>
+    </div>
+    {% endif %}
+    {% if form.client.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-6">
+      <div class="input-group">
+        <div class="input-group-text">Client</div>
+        {{form.client|add_class:"form-select"}} {%if form.client.errors%}
+        <div class="text-danger">{{form.client.errors|striptags}}</div>
+        {%endif%}
+      </div>
+    </div>
+    {% endif %} 
     </div>
   </div>
 
@@ -65,6 +78,12 @@
     $("#id_agency_type").select2({
       theme: "bootstrap-5",
       placeholder: "Choose Agency Types",
+      allowClear: true,
+    });
+
+    $("#id_client_type").select2({
+      theme: "bootstrap-5",
+      placeholder: "Choose Client Types",
       allowClear: true,
     });
 
