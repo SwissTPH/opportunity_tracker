@@ -15,6 +15,24 @@ class OpportunityFilterForm(forms.Form):
         (True, "Non-Competitive")
     ]
 
+    FUNDING_AGENCY_TYPE = [
+        (None, "All"),
+        ("BDA", "Bilateral"),
+        ("C", "Corporate"),
+        ("F", "Foundation"),
+        ("GF", "Global Financing"),
+        ("NGO", "NGO"),
+        ("UN", "UN")
+    ]
+
+    CLIENT_TYPE = [
+        ("BDA", "Bilateral Donor Agency"),
+        ("DB", "Development Bank"),
+        ("F", "Foundation, Philanthropic"),
+        ("GHI", "Global Health Initiative"),
+        ("O", "Other")
+    ]
+
     opp_type = forms.ChoiceField(choices=OPP_TYPE, required=False)
     due_date_from = forms.DateField(
         required=False, widget=forms.DateInput(attrs={'type': 'date'}))
@@ -58,6 +76,10 @@ class OpportunityFilterForm(forms.Form):
     is_noncompetitive = forms.ChoiceField(
         choices=COMPETITION_TYPE, required=False
     )
+    funding_agency_type = forms.MultipleChoiceField(
+        choices=FUNDING_AGENCY_TYPE, required=False)
+    client_type = forms.MultipleChoiceField(
+        choices=CLIENT_TYPE, required=False)
 
     def __init__(self, *args, **kwargs):
         super(OpportunityFilterForm, self).__init__(*args, **kwargs)

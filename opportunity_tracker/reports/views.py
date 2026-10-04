@@ -6,7 +6,7 @@ from tracker.workflows.service import get_statuses_by_group
 from tracker.workflows.registry import get_active_workflow
 from tracker.workflows.schema import get_status_slug_to_id
 from .pdf_processor import PDFProcessor
-from tracker.models import FundingAgency, GoReason, NoGoReason, Opportunity
+from tracker.models import Client, FundingAgency, GoReason, NoGoReason, Opportunity
 from .forms import FinancialFilterForm, OpportunityFilterForm, RationalFilterForm
 from .models import ReportConfig
 
@@ -72,6 +72,9 @@ def get_opportunities(request):
         created_from = form.cleaned_data.get("created_at_from", None)
         created_to = form.cleaned_data.get("created_at_to", None)
         is_noncompetitive = form.cleaned_data.get("is_noncompetitive", None)
+        funding_agency_type = form.cleaned_data.get(
+            "funding_agency_type", None)
+        client_type = form.cleaned_data.get("client_type", None)
 
         opportunities = Opportunity.objects.all().order_by("-created_at")
 
@@ -168,6 +171,34 @@ def get_opportunities(request):
                 is_noncompetitive=is_noncompetitive)
             subtitle.append(
                 "Competition Type: " + ("Non-Competitive" if is_noncompetitive == "True" else "Competitive"))
+
+        if funding_agency_type:
+            funding_agency_type = [
+                value for value in funding_agency_type if value not in (None, "None")]
+            if funding_agency_type:
+                opportunities = opportunities.filter(
+                    funding_agency__agency_type__in=funding_agency_type)
+                agency_type_labels = dict(FundingAgency.AGENCY_TYPE)
+                agency_type_display = [
+                    agency_type_labels.get(value, value)
+                    for value in funding_agency_type
+                ]
+                subtitle.append("Funding Agency Types: " +
+                                ", ".join(agency_type_display))
+
+        if client_type:
+            client_type = [
+                value for value in client_type if value not in (None, "None")]
+            if client_type:
+                opportunities = opportunities.filter(
+                    client__client_type__in=client_type)
+                client_type_labels = dict(Client.CLIENT_TYPE)
+                client_display = [
+                    client_type_labels.get(value, value)
+                    for value in client_type
+                ]
+                subtitle.append("Client Types: " +
+                                ", ".join(client_display))
 
         # Get the total amount
         total_amount = opportunities.aggregate(
