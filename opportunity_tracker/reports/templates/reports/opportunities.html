@@ -40,6 +40,29 @@
       <div class="text-danger">{{form.is_noncompetitive.errors|striptags}}</div>
       {%endif%}
     </div>
+    {% endif %} {% if form.client_type.field.widget.input_type != 'hidden' %}
+    <div class="form-floating col-md-6">
+      <div class="input-group">
+        <div class="input-group-text">Client Type</div>
+        {{form.client_type|add_class:"form-select"}} {%if
+        form.client_type.errors%}
+        <div class="text-danger">{{form.client_type.errors|striptags}}</div>
+        {%endif%}
+      </div>
+    </div>
+    {% endif %} {% if form.funding_agency_type.field.widget.input_type !=
+    'hidden' %}
+    <div class="form-floating col-md-6">
+      <div class="input-group">
+        <div class="input-group-text">Funding Agency Type</div>
+        {{form.funding_agency_type|add_class:"form-select"}} {%if
+        form.funding_agency_type.errors%}
+        <div class="text-danger">
+          {{form.funding_agency_type.errors|striptags}}
+        </div>
+        {%endif%}
+      </div>
+    </div>
     {% endif %} {% if form.client.field.widget.input_type != 'hidden' %}
     <div class="form-floating col-md-6">
       {{form.client|add_class:"form-select"}}
@@ -227,3 +250,20 @@
     Preview
   </button>
 </form>
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    $("#id_funding_agency_type").select2({
+      theme: "bootstrap-5",
+      placeholder: "Choose Agency Types",
+      allowClear: true,
+    });
+
+    $("#id_client_type").select2({
+      theme: "bootstrap-5",
+      placeholder: "Choose Client Types",
+      allowClear: true,
+    });
+  });
+</script>
+{% endblock scripts %}
